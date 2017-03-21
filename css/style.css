@@ -44,6 +44,12 @@ html, body {
   margin-bottom: 8px;
 }
 
+#properties textarea {
+  resize:vertical;
+  background-color: #F2F2F2;
+  margin-bottom: 8px;
+}
+
 #properties hr {
   margin: 8px 0 16px 0;
   flex: 1;
@@ -201,11 +207,16 @@ input#node-b[type=range]::-webkit-slider-runnable-track {
   align-items: center;
 }
 
-.prop-horiz input {
+.prop-horiz.spaced {
+  justify-content: space-between;
+  margin-top: 16px;
+}
+
+.prop-horiz input[type=text] {
   width: 80px;
 }
 
-.prop-node-val {
+.prop-node-val, .prop-edge-val {
   margin: 0 8px;
 }
 

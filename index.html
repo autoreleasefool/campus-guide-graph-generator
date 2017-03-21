@@ -104,7 +104,7 @@
 
       </div>
 
-      <div id="node-props" class="focused-prop prop">
+      <div id="node-props" class="hidden-prop prop">
 
         <label for="node-id">Building ID (optional)</label>
         <input type="text" id="node-id" name="node-id" placeholder="0" />
@@ -148,7 +148,32 @@
 
       </div>
 
-      <div id="edge-props" class="hidden-prop prop">
+      <div id="edge-props" class="focused-prop prop">
+
+        <label for="edge-node-a">Node A</label>
+        <input type="text" id="edge-node-a" name="edge-node-a" placeholder="0:s:0" />
+
+        <label for="edge-node-b">Node B</label>
+        <input type="text" id="edge-node-b" name="edge-node-b" placeholder="0:s:0" />
+
+        <hr />
+
+        <label for="a-to-b">A to B (optional)</label>
+        <textarea id="a-to-b" rows="5" name="a-to-b" placeholder="Turn right and..."></textarea>
+
+        <label for="b-to-a">B to A (optional)</label>
+        <textarea id="b-to-a" rows="5" name="b-to-a" placeholder="Turn left and..."></textarea>
+
+        <div class="prop-horiz spaced">
+          <label for="edge-accessible" class="prop-edge-val">Accessible?</label>
+          <input type="checkbox" id="edge-accessible" name="edge-accessible" />
+        </div>
+
+        <div class="prop-horiz spaced">
+          <label for="edge-closed" class="prop-edge-val">Closed?</label>
+          <input type="checkbox" id="edge-closed" name="edge-closed" />
+        </div>
+
       </div>
 
     </div>
