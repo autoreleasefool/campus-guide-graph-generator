@@ -1,0 +1,146 @@
+html, body {
+  height: 100%;
+  padding: 0;
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+}
+
+.material-icons.md-18 { font-size: 18px; }
+.material-icons.md-24 { font-size: 24px; }
+.material-icons.md-36 { font-size: 36px; }
+.material-icons.md-48 { font-size: 48px; }
+.material-icons.md-dark { color: #2D2D2C; }
+.material-icons.md-light { color: #F2F2F2; }
+
+/*
+ * Properties
+ */
+
+#properties {
+  width: 300px;
+  height: 100%;
+  background-color: #2D2D2C;
+  overflow: scroll;
+}
+
+.prop {
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+
+.hidden-prop {
+  display: none;
+}
+
+#properties label {
+  color: #F2F2F2;
+  margin-bottom: 4px;
+}
+
+#properties input {
+  background-color: #F2F2F2;
+  height: 2em;
+  margin-bottom: 8px;
+}
+
+#properties hr {
+  margin: 8px 0 16px 0;
+  flex: 1;
+}
+
+/*
+ * Properties - Files
+ */
+
+.filepath-input-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.filepath-input {
+  flex: 1;
+}
+
+.prop-folder {
+  margin: 0 8px;
+}
+
+/*
+ * Properties - List
+ */
+
+.prop-list-container {
+  background-color: #F2F2F2;
+  margin-bottom: 8px;
+  height: 150px;
+  overflow: scroll;
+}
+
+ul.prop-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+ul.prop-list li:nth-child(even) {
+  background-color: #D2D2D2;
+}
+
+li.prop-list-item {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+  padding: 8px 16px;
+}
+
+li.prop-list-item p {
+  flex: 1;
+  color: #000;
+  margin: 0;
+  padding: 0;
+}
+
+.selected-floor {
+  background-color: #ACA39A;
+}
+
+/*
+ * Properties - Table
+ */
+
+#graph-stats {
+  table-layout: fixed;
+  width: 100%;
+}
+
+#graph-stats td,th {
+  color: #F2F2F2;
+  text-align: center;
+  padding-bottom: 8px;
+}
+
+
+
+/*
+ * Canvases
+ */
+
+.fullsize-canvas {
+  position: absolute;
+  left: 300px;
+}
+
+.bg-canvas {
+  z-index: 0;
+}
+
+.mg-canvas {
+  z-index: 1;
+}
+
+.fg-canvas {
+  z-index: 2;
+}

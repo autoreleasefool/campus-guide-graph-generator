@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+
+    <!-- Meta data -->
+    <meta charset="utf-8">
+    <title>GG - Campus Guide</title>
+
+    <!-- Load styles -->
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Roboto|Material+Icons">
+
+    <!-- Load scripts -->
+    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script defer src="js/script.js"></script>
+
+  </head>
+
+  <body>
+    <canvas id="backgroundCanvas" class="fullsize-canvas bg-canvas"></canvas>
+    <canvas id="contentCanvas" class="fullsize-canvas mg-canvas" /></canvas>
+    <canvas id="toolCanvas" class="fullsize-canvas fg-canvas" /></canvas>
+
+    <div id="properties">
+
+      <div id="base" class="focused-prop prop">
+
+        <label for="base-name">Name</label>
+        <input type="text" id="base-name" name="base-name" placeholder="MHN" />
+
+        <label for="base-output">Output</label>
+        <div class="filepath-input-container">
+          <input class="filepath-input" type="text" id="base-output" name="base-output" placeholder="/Users/joseph/Desktop/output" />
+          <i class="material-icons md-light md-24 prop-folder">folder</i>
+        </div>
+
+        <hr />
+
+        <label>Floors</label>
+        <div class="prop-list-container">
+          <ul id="base-floors" class="prop-list">
+            <li class="prop-list-item selected-floor"><p>(1) First</p> <i class="material-icons md-dark md-24">arrow_downward</i></li>
+            <li class="prop-list-item"><p>(2) Second</p> <i class="material-icons md-dark md-24">arrow_upward</i><i class="material-icons md-dark md-24">arrow_downward</i></li>
+            <li class="prop-list-item"><p>(3) Third</p> <i class="material-icons md-dark md-24">arrow_upward</i></li>
+
+          </ul>
+        </div>
+
+        <label for="base-floor">Floor name</label>
+        <input type="text" id="base-floor" name="base-floor" placeholder="First" />
+
+        <label for="base-image">Image</label>
+        <div class="filepath-input-container">
+          <input class="filepath-input" type="text" id="base-image" name="base-image" placeholder="/Users/joseph/Desktop/image.png" />
+          <i class="material-icons md-light md-24 prop-folder">folder</i>
+        </div>
+
+        <hr />
+
+        <table id="graph-stats">
+          <thead>
+            <tr>
+              <th>Type</th>
+              <th>Current</th>
+              <th>All</th>
+            <tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><i class="material-icons md-light md-24">store</i></td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td><i class="material-icons md-light md-24">layers</i></td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td><i class="material-icons md-light md-24">swap_vert</i></td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td><i class="material-icons md-light md-24">transfer_within_a_station</i></td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td><i class="material-icons md-light md-24">room</i></td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Nodes</td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+            <tr>
+              <td>Edges</td>
+              <td>0</td>
+              <td>0</td>
+            </tr>
+          </tbody>
+        </table>
+
+      </div>
+
+      <div id="node-props" class="hidden-prop prop">
+      </div>
+
+      <div id="edge-props" class="hidden-prop prop">
+      </div>
+
+    </div>
+
+  </body>
+
+</html>
