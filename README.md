@@ -2,6 +2,21 @@
 
 Using a UI laid over a floorplan, generate a graph of connected rooms and hallways to map out a building
 
+## Design
+
+#### Home
+![Home](./screenshots/home.png)
+
+#### Node properties
+![Nodes](./screenshots/nodes.png)
+
+#### Edge properties
+![Edges](./screenshots/edges.png)
+
+## Screenshots
+
+To be completed...
+
 ## License
 
 ```
