@@ -2,29 +2,26 @@
 <html lang="en">
 
   <head>
-
     <!-- Meta data -->
     <meta charset="utf-8">
     <title>GG - Campus Guide</title>
-
     <!-- Load styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Roboto|Material+Icons">
-
     <!-- Load scripts -->
     <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
     <script defer src="js/script.js"></script>
-
   </head>
 
   <body>
+
     <canvas id="backgroundCanvas" class="fullsize-canvas bg-canvas"></canvas>
     <canvas id="contentCanvas" class="fullsize-canvas mg-canvas" /></canvas>
     <canvas id="toolCanvas" class="fullsize-canvas fg-canvas" /></canvas>
 
     <div id="properties">
 
-      <div id="base" class="focused-prop prop">
+      <div id="base" class="hidden-prop prop">
 
         <label for="base-name">Name</label>
         <input type="text" id="base-name" name="base-name" placeholder="MHN" />
@@ -107,7 +104,48 @@
 
       </div>
 
-      <div id="node-props" class="hidden-prop prop">
+      <div id="node-props" class="focused-prop prop">
+
+        <label for="node-id">Building ID (optional)</label>
+        <input type="text" id="node-id" name="node-id" placeholder="0" />
+
+        <label>Type</label>
+        <div class="prop-horiz prop-icon-list">
+          <i class="material-icons md-light md-24 icon-list-item icon-list-item-sel">store</i>
+          <i class="material-icons md-light md-24 icon-list-item">layers</i>
+          <i class="material-icons md-light md-24 icon-list-item">swap_vert</i>
+          <i class="material-icons md-light md-24 icon-list-item">transfer_within_a_station</i>
+          <i class="material-icons md-light md-24 icon-list-item">room</i>
+        </div>
+
+        <label for="node-id">Name (optional)</label>
+        <input type="text" id="node-id" name="node-id" placeholder="02" />
+
+        <hr />
+
+        <div class="prop-horiz">
+          <label for="node-x" class="prop-node-val">X</label>
+          <input type="text" id="node-x" name="node-x" />
+
+          <label for="node-y" class="prop-node-val">Y</label>
+          <input type="text" id="node-y" name="node-y" />
+        </div>
+
+        <div class="prop-horiz">
+          <label for="node-r" class="prop-node-val">R</label>
+          <input type="range" id="node-r" name="node-r" min="0" max="255" value="0" />
+        </div>
+
+        <div class="prop-horiz">
+          <label for="node-g" class="prop-node-val">G</label>
+          <input type="range" id="node-g" name="node-g" min="0" max="255" value="0" />
+        </div>
+
+        <div class="prop-horiz">
+          <label for="node-b" class="prop-node-val">B</label>
+          <input type="range" id="node-b" name="node-b" min="0" max="255" value="0" />
+        </div>
+
       </div>
 
       <div id="edge-props" class="hidden-prop prop">

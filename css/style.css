@@ -38,7 +38,7 @@ html, body {
   margin-bottom: 4px;
 }
 
-#properties input {
+#properties input[type=text] {
   background-color: #F2F2F2;
   height: 2em;
   margin-bottom: 8px;
@@ -107,6 +107,19 @@ li.prop-list-item p {
   background-color: #ACA39A;
 }
 
+.prop-icon-list {
+  justify-content: space-between;
+}
+
+.icon-list-item {
+  padding: 8px;
+  margin: 8px 0 8px 0;
+}
+
+.icon-list-item-sel {
+  border: 1px white solid;
+}
+
 /*
  * Properties - Table
  */
@@ -122,7 +135,79 @@ li.prop-list-item p {
   padding-bottom: 8px;
 }
 
+/*
+ * Properties - Range
+ */
 
+input[type=range] {
+  flex: 1;
+  height: 2em;
+  margin-bottom: 8px;
+}
+
+input[type=range] {
+  -webkit-appearance: none;
+  background: transparent;
+}
+
+input[type=range]::-ms-track {
+  width: 100%;
+  cursor: pointer;
+  background: transparent;
+  border-color: transparent;
+  color: transparent;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+  height: 5px;
+  border: none;
+  border-radius: 3px;
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  border: none;
+  height: 16px;
+  width: 16px;
+  border-radius: 50%;
+  background: #F2F2F2;
+  margin-top: -4px;
+}
+
+input[type=range]:focus {
+  outline: none;
+}
+
+input#node-r[type=range]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #000000 , #FF0000);
+}
+
+input#node-g[type=range]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #000000 , #00FF00);
+}
+
+input#node-b[type=range]::-webkit-slider-runnable-track {
+  background: linear-gradient(to right, #000000 , #0000FF);
+}
+
+
+/*
+ * Properties - Other
+ */
+
+.prop-horiz {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+}
+
+.prop-horiz input {
+  width: 80px;
+}
+
+.prop-node-val {
+  margin: 0 8px;
+}
 
 /*
  * Canvases
