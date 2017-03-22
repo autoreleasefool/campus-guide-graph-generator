@@ -1,4 +1,4 @@
-const TOOLBAR_WIDTH = 150;
+const TOOLBAR_WIDTH = 300;
 
 // List of all canvases
 const canvases = [];
@@ -48,7 +48,7 @@ function handleResize() {
 }
 
 // On ready
-$(() => {
+$(document).ready(function() {
   // Get references to each canvas and store
   backgroundCanvas = $('#backgroundCanvas');
   contentCanvas = $('#contentCanvas');
@@ -58,6 +58,8 @@ $(() => {
   canvases.push(contentCanvas);
   canvases.push(toolCanvas);
   handleResize();
+
+  $("#toolbar").draggable({ containment: "#toolbar-area" });
 });
 
 // Bind resize function

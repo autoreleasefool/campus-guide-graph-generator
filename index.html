@@ -8,12 +8,32 @@
     <!-- Load styles -->
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Roboto|Material+Icons">
+    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <!-- Load scripts -->
-    <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <!--<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>-->
     <script defer src="js/script.js"></script>
   </head>
 
   <body>
+
+    <div id="toolbar-area">
+      <div id="toolbar">
+        <div class="header"></div>
+        <div class="icons">
+          <a href="#"><i class="material-icons md-light md-24 icon selected-icon">touch_app</i></a></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">pan_tool</i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">add_circle</i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">remove_circle</i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">linear_scale</i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon"></i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">zoom_in</i></a>
+          <a href="#"><i class="material-icons md-light md-24 icon">zoom_out</i></a>
+        </div>
+      </div>
+    </div>
 
     <canvas id="backgroundCanvas" class="fullsize-canvas bg-canvas"></canvas>
     <canvas id="contentCanvas" class="fullsize-canvas mg-canvas" /></canvas>
@@ -111,7 +131,7 @@
 
         <label>Type</label>
         <div class="prop-horiz prop-icon-list">
-          <i class="material-icons md-light md-24 icon-list-item icon-list-item-sel">store</i>
+          <i class="material-icons md-light md-24 icon-list-item selected-icon">store</i>
           <i class="material-icons md-light md-24 icon-list-item">layers</i>
           <i class="material-icons md-light md-24 icon-list-item">swap_vert</i>
           <i class="material-icons md-light md-24 icon-list-item">transfer_within_a_station</i>

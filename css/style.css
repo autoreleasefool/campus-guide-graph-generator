@@ -13,6 +13,46 @@ html, body {
 .material-icons.md-light { color: #F2F2F2; }
 
 /*
+ * Toolbar
+ */
+
+#toolbar-area {
+  position: absolute;
+  width:  calc(100% - 300px);
+  height: 100%;
+  left: 300px;
+}
+
+#toolbar {
+  width: 96px;
+  height: 200px;
+  z-index: 999;
+  background-color: #8F001A;
+  position: absolute;
+  top: 0;
+  right: 0;
+}
+
+#toolbar .header {
+  background-color: #2D2D2C;
+  height: 24px;
+  width: 100%;
+}
+
+#toolbar .icons {
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  align-content: space-between;
+  justify-content: space-between;
+  padding: 8px;
+}
+
+#toolbar .icon {
+  padding: 6px;
+}
+
+/*
  * Properties
  */
 
@@ -122,7 +162,7 @@ li.prop-list-item p {
   margin: 8px 0 8px 0;
 }
 
-.icon-list-item-sel {
+.selected-icon {
   border: 1px white solid;
 }
 
