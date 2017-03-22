@@ -5,12 +5,12 @@
 // The list of floors
 const floors = [
   {
-    name: '',
+    name: 'First',
     img: null,
     imgName: '',
     nodes: [],
     edges: [],
-  }
+  },
 ];
 // The floor currently being edited
 let currentFloor = 0;
@@ -84,6 +84,74 @@ function setFloorImage(floor, name, img) {
   $('#base-floor-image').val(name);
 }
 
+/**
+ * Updates the floor list based on user input.
+ */
+function handleFloorChange() {
+  const id = $(this).attr('id');
+  const floor = parseInt(id.substr(id.lastIndexOf('-') + 1));
+
+  if (/delete/g.test(id)) {
+    if (floors.length === 1) {
+      alert('You cannot delete the last floor');
+      return;
+    }
+
+    floors.splice(floor, 1);
+    if (currentFloor >= floors.length) {
+      currentFloor -= 1;
+    }
+  } else if (/down/g.test(id)) {
+    const floorMovingDown = floors[floor];
+    floors[floor] = floors[floor + 1];
+    floors[floor + 1] = floorMovingDown;
+    if (currentFloor === floor ) {
+      currentFloor = floor + 1;
+    }
+  } else if (/up/g.test(id)) {
+    const floorMovingUp = floors[floor];
+    floors[floor] = floors[floor - 1];
+    floors[floor - 1] = floorMovingUp;
+    if (currentFloor === floor ) {
+      currentFloor = floor - 1;
+    }
+  } else if (/add/g.test(id)) {
+    floors.push({
+      name: 'New floor',
+      img: null,
+      imgName: '',
+      nodes: [],
+      edges: [],
+    });
+  } else if (/select/g.test(id)) {
+    currentFloor = floor;
+  }
+
+  $('#base-floor').val(floors[currentFloor].name);
+  updateFloorList();
+}
+
+/**
+ * Updates the list of floors displayed to the user.
+ */
+function updateFloorList() {
+  const floorListElem = $('#base-floors');
+  floorListElem.empty();
+  for (let i = 0; i < floors.length; i++) {
+    const floorElem = $(`<li class="prop-list-item${i === currentFloor ? " selected-floor" : ""}"><p class="floor-change" id="floor-select-${i}">(${i + 1}) ${floors[i].name}</p></li>`);
+    if (i > 0) {
+      floorElem.append(`<i class="material-icons md-dark md-24 floor-change" id="floor-up-${i}">arrow_upward</i>`);
+    }
+    if (i < floors.length - 1) {
+      floorElem.append(`<i class="material-icons md-dark md-24 floor-change" id="floor-down-${i}">arrow_downward</i>`);
+    }
+    floorElem.append(`<i class="material-icons md-red md-24 floor-change" id="floor-delete-${i}">close</i>`);
+    floorListElem.append(floorElem);
+  }
+
+  floorListElem.append('<li class="prop-list-item floor-change" id="floor-add">Add new floor</p></li>');
+}
+
 /************************************************
  * MENUS
  ************************************************/
@@ -108,6 +176,8 @@ function showCurrentMenu() {
 function populateMenu(menu) {
   switch (menu) {
     case 0: /* Base properties */
+      $('#base-floor').val(floors[currentFloor].name);
+      updateFloorList();
       break;
     case 1: /* Node properties */
       break;
@@ -164,7 +234,7 @@ function handleFloorImage(e) {
     img.src = event.target.result;
   }
 
-  if (/image\/(png|jpe?g)/g.test(e.target.files[0].type)) {
+  if (/image\/(png|jpe?g)/ig.test(e.target.files[0].type)) {
     reader.readAsDataURL(e.target.files[0]);
   } else {
     alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
@@ -201,7 +271,11 @@ $(document).ready(function() {
   // Update floor name
   $('#base-floor').on('input', (event) => {
     floors[currentFloor].name = event.target.value;
+    updateFloorList();
   })
+
+  // Altering floors
+  $('#base-floors').on('click', '.floor-change', handleFloorChange);
 
 });
 

@@ -11,6 +11,7 @@ html, body {
 .material-icons.md-48 { font-size: 48px; }
 .material-icons.md-dark { color: #2D2D2C; }
 .material-icons.md-light { color: #F2F2F2; }
+.material-icons.md-red { color: red; }
 
 /*
  * Toolbar
@@ -123,6 +124,10 @@ html, body {
   margin: 0 8px;
 }
 
+.floor-change {
+  cursor: pointer;
+}
+
 /*
  * Properties - List
  */
@@ -142,6 +147,10 @@ ul.prop-list {
 
 ul.prop-list li:nth-child(even) {
   background-color: #D2D2D2;
+}
+
+ul.prop-list li:nth-child(even).selected-floor {
+  background-color: #ACA39A;
 }
 
 li.prop-list-item {
