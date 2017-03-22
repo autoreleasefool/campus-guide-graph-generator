@@ -23,34 +23,26 @@
       <div id="toolbar">
         <div class="header"></div>
         <div class="icons">
-          <a href="#"><i class="material-icons md-light md-24 icon selected-icon">touch_app</i></a></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">pan_tool</i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">add_circle</i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">remove_circle</i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">linear_scale</i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon"></i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">zoom_in</i></a>
-          <a href="#"><i class="material-icons md-light md-24 icon">zoom_out</i></a>
+          <i id="tool-select" class="material-icons md-light md-24 icon tool">touch_app</i>
+          <i id="tool-pan" class="material-icons md-light md-24 icon tool">pan_tool</i>
+          <i id="tool-add" class="material-icons md-light md-24 icon tool">add_circle</i>
+          <i id="tool-remove" class="material-icons md-light md-24 icon tool">remove_circle</i>
+          <i id="tool-edge" class="material-icons md-light md-24 icon tool">linear_scale</i>
+          <i class="material-icons md-light md-24 icon"></i>
+          <i id="tool-zoom-in" class="material-icons md-light md-24 icon tool">zoom_in</i>
+          <i id="tool-zoom-out" class="material-icons md-light md-24 icon tool">zoom_out</i>
         </div>
       </div>
     </div>
 
-    <canvas id="backgroundCanvas" class="fullsize-canvas bg-canvas"></canvas>
-    <canvas id="contentCanvas" class="fullsize-canvas mg-canvas" /></canvas>
-    <canvas id="toolCanvas" class="fullsize-canvas fg-canvas" /></canvas>
+    <canvas id="contentCanvas" /></canvas>
 
     <div id="properties">
 
-      <div id="base" class="hidden-prop prop">
+      <div id="base-props" class="prop">
 
         <label for="base-name">Name</label>
         <input type="text" id="base-name" name="base-name" placeholder="MHN" />
-
-        <label for="base-output">Output</label>
-        <div class="filepath-input-container">
-          <input class="filepath-input" type="text" id="base-output" name="base-output" placeholder="/Users/joseph/Desktop/output" />
-          <i class="material-icons md-light md-24 prop-folder">folder</i>
-        </div>
 
         <hr />
 
@@ -67,10 +59,11 @@
         <label for="base-floor">Floor name</label>
         <input type="text" id="base-floor" name="base-floor" placeholder="First" />
 
-        <label for="base-image">Image</label>
+        <label for="base-floor-image">Image</label>
         <div class="filepath-input-container">
-          <input class="filepath-input" type="text" id="base-image" name="base-image" placeholder="/Users/joseph/Desktop/image.png" />
-          <i class="material-icons md-light md-24 prop-folder">folder</i>
+          <input disabled class="filepath-input" type="text" id="base-floor-image" name="base-floor-image" placeholder="/Users/joseph/Desktop/image.png" />
+          <i class="material-icons md-light md-24 prop-folder" for="floor-image">folder</i>
+          <input type="file" id="floor-image" />
         </div>
 
         <hr />
@@ -124,7 +117,7 @@
 
       </div>
 
-      <div id="node-props" class="hidden-prop prop">
+      <div id="node-props" class="prop">
 
         <label for="node-id">Building ID (optional)</label>
         <input type="text" id="node-id" name="node-id" placeholder="0" />
@@ -168,7 +161,7 @@
 
       </div>
 
-      <div id="edge-props" class="focused-prop prop">
+      <div id="edge-props" class="prop">
 
         <label for="edge-node-a">Node A</label>
         <input type="text" id="edge-node-a" name="edge-node-a" placeholder="0:s:0" />

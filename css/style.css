@@ -52,6 +52,11 @@ html, body {
   padding: 6px;
 }
 
+.tool {
+  cursor: pointer;
+  border: 1px transparent solid;
+}
+
 /*
  * Properties
  */
@@ -84,6 +89,10 @@ html, body {
   margin-bottom: 8px;
 }
 
+#properties input[type=file] {
+  display: none;
+}
+
 #properties textarea {
   resize:vertical;
   background-color: #F2F2F2;
@@ -110,6 +119,7 @@ html, body {
 }
 
 .prop-folder {
+  cursor: pointer;
   margin: 0 8px;
 }
 
@@ -261,22 +271,10 @@ input#node-b[type=range]::-webkit-slider-runnable-track {
 }
 
 /*
- * Canvases
+ * Canvas
  */
 
-.fullsize-canvas {
+canvas {
   position: absolute;
   left: 300px;
-}
-
-.bg-canvas {
-  z-index: 0;
-}
-
-.mg-canvas {
-  z-index: 1;
-}
-
-.fg-canvas {
-  z-index: 2;
 }
