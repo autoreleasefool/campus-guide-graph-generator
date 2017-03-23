@@ -8,22 +8,37 @@ const PROPERTIES_PANEL_WIDTH = 300;
 // Radius of a node
 const DEFAULT_NODE_SIZE = 4;
 
+// Base menu identifier
 const MENU_BASE = 0;
+// Node menu identifier
 const MENU_NODE = 1;
+// Edge menu identifier
 const MENU_EDGE = 2;
 
+// Selection tool identifier
 const TOOL_SELECT = 0;
+// Panning tool identifier
 const TOOL_PAN = 1;
+// Node addition tool identifier
 const TOOL_ADD = 2;
+// Node removal tool identifier
 const TOOL_REMOVE = 3;
+// Edge manipulation tool identifier
 const TOOL_EDGE = 4;
+// Zoom tool identifier
 const TOOL_ZOOM_IN = 5;
+// Zoom tool identifier
 const TOOL_ZOOM_OUT = 6;
 
+// Nodes which represent doorways
 const NODE_TYPE_DOOR = 0;
+// Nodes which represent staircases
 const NODE_TYPE_STAIRS = 1;
+// Nodes which represent elevators
 const NODE_TYPE_ELEVATOR = 2;
+// Nodes which represent hallways
 const NODE_TYPE_HALL = 3;
+// Nodes which represent rooms
 const NODE_TYPE_ROOM = 4;
 
 /************************************************
@@ -89,24 +104,41 @@ let canvasWidth = 0;
 // Height of the canvases
 let canvasHeight = 0;
 
+// Scaling factor
+let scale = 1;
+
+// Indicates if the canvas should record panning
 let panning = false;
+// Starting x location of panning
 let panStartX = 0;
+// Staring y location of panning
 let panStartY = 0;
+// Initial x offset before panning
 let panStartOffsetX = 0;
+// Initial y offset before panning
 let panStartOffsetY = 0;
+// Current x panning offset
 let panOffsetX = 0;
+// Current y panning offset
 let panOffsetY = 0;
 
 /************************************************
  * TOOLS
  ************************************************/
 
+/**
+ * Handles a global keypress event
+ *
+ * @param {any} event key event
+ */
 function handleKeyPress(event) {
   switch (event.target.tagName.toLowerCase()) {
     case "input":
     case "textarea":
+      // Ignore keypresses when a text input is focused
       break;
     default:
+      // Hotkeys to switch tools
       const oldTool = currentTool;
       switch (event.keyCode) {
         case 83: case 84: currentTool = TOOL_SELECT; break;
@@ -150,7 +182,7 @@ function tryToSelectAt(x, y, floor) {
 
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x + panOffsetX - x) <= nodeSize && Math.abs(nodes[i].y + panOffsetY - y) <= nodeSize) {
+    if (Math.abs(nodes[i].x - x) <= nodeSize / scale && Math.abs(nodes[i].y - y) <= nodeSize / scale) {
       selectedNode = nodes[i];
       mostRecentNodeType = selectedNode.type;
       newMenu = MENU_NODE;
@@ -160,6 +192,7 @@ function tryToSelectAt(x, y, floor) {
 
   if (selectedNode == null) {
     const edges = floors[floor].edges;
+    // TODO: select edge
     for (let i = 0; i < edges.length; i++) {}
   }
 
@@ -174,16 +207,16 @@ function tryToSelectAt(x, y, floor) {
 /**
  * Adds a new node to the graph.
  *
- * @param {number} x           x location of new node
- * @param {number} y           y location of new node
- * @param {number} floor       floor to add new node to
- * @param {number} type        type of new node
- * @param {boolean} withOffset true to add offset to x and y, false to ignore
+ * @param {number} x     x location of new node
+ * @param {number} y     y location of new node
+ * @param {number} floor floor to add new node to
+ * @param {number} type  type of new node
+ * @returns {object} the new node added
  */
-function addNewNode(x, y, floor, type, withOffset) {
+function addNewNode(x, y, floor, type) {
   const newNode = {
-    x: x - (withOffset ? panOffsetX : 0),
-    y: y  - (withOffset ? panOffsetY : 0),
+    x,
+    y,
     type,
     id: '',
     bid: '',
@@ -202,7 +235,7 @@ function addNewNode(x, y, floor, type, withOffset) {
 function removeNode(x, y, floor) {
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x + panOffsetX - x) <= nodeSize && Math.abs(nodes[i].y + panOffsetY - y) <= nodeSize) {
+    if (Math.abs(nodes[i].x - x) <= nodeSize / scale && Math.abs(nodes[i].y - y) <= nodeSize / scale) {
       nodes.splice(i, 1);
       return;
     }
@@ -307,6 +340,12 @@ function resetToBaseMenu() {
   setCurrentMenu(MENU_BASE);
 }
 
+/**
+ * Add a floor to the project.
+ *
+ * @param {string} name name of the new floor
+ * @returns {object} the new floor
+ */
 function addNewFloor(name) {
   const newFloor = {
     name,
@@ -322,12 +361,27 @@ function addNewFloor(name) {
   return newFloor;
 }
 
+/**
+ * Sets the slider values for color input.
+ *
+ * @param {number} r red color value
+ * @param {number} g green color value
+ * @param {number} b blue color value
+ */
 function setNodeTypeColorInput(r, g, b) {
   $('#node-r').val(r);
   $('#node-g').val(g);
   $('#node-b').val(b);
 }
 
+/**
+ * Sets the color for nodes of a certain type.
+ *
+ * @param {number} type type to set color for
+ * @param {number} r    red color value
+ * @param {number} g    green color value
+ * @param {number} b    blue color value
+ */
 function setNodeTypeColor(type, r, g, b) {
   nodeTypeColors[type].r = r;
   nodeTypeColors[type].g = g;
@@ -335,6 +389,9 @@ function setNodeTypeColor(type, r, g, b) {
   redraw();
 }
 
+/**
+ * Displays the selected node type and its colors in the sliders.
+ */
 function updateNodeType() {
   const node = selectedNode;
   if (node == null) {
@@ -383,7 +440,6 @@ function populateMenu(menu) {
       const node = selectedNode;
       if (node != null) {
         updateNodeType();
-        // setNodeTypeColorInput(nodeTypeColors[node.type].r, nodeTypeColors[node.type].g, nodeTypeColors[node.type].b);
         $('#node-bid').val(node.bid);
         $('#node-id').val(node.id);
         $('#node-x').val(Math.round(node.x));
@@ -400,34 +456,67 @@ function populateMenu(menu) {
  ************************************************/
 
 /**
+ * Converts a value to the pointer scale.
+ *
+ * @param {number} val    the value to convert
+ * @param {number} offset the offset (x or y)
+ * @returns {number} a value converted according to the pointer scale
+ */
+function convertToPointerScale(val, offset) {
+  return (val - offset) / scale;
+}
+
+/**
+ * Converts a value to the drawing scale.
+ *
+ * @param {number} val    the value to convert
+ * @param {number} offset the offset (x or y)
+ * @returns {number} a value converted according to the drawing scale
+ */
+function convertToDrawingScale(val, offset) {
+  return val * scale + offset;
+}
+
+/**
  * Handles click on the canvas, based on the current tool
  */
 function handleCanvasClick(event) {
+  const eventX = convertToPointerScale(event.offsetX, panOffsetX);
+  const eventY = convertToPointerScale(event.offsetY, panOffsetY);
   switch(currentTool) {
-    default: // #tool-select
-      tryToSelectAt(event.offsetX, event.offsetY, currentFloor);
+    default:
+      tryToSelectAt(eventX, eventY, currentFloor);
       break;
-    case TOOL_PAN: // #tool-pan
+    case TOOL_PAN:
       break;
-    case TOOL_ADD: // #tool-add
-      selectedNode = addNewNode(event.offsetX, event.offsetY, currentFloor, mostRecentNodeType, true);
+    case TOOL_ADD:
+      selectedNode = addNewNode(eventX, eventY, currentFloor, mostRecentNodeType);
       setCurrentMenu(MENU_NODE);
       redraw();
       break;
-    case TOOL_REMOVE: // #tool-remove
-      removeNode(event.offsetX, event.offsetY, currentFloor);
+    case TOOL_REMOVE:
+      removeNode(eventX, eventY, currentFloor);
       resetToBaseMenu();
       redraw();
       break;
-    case TOOL_EDGE: // #tool-edge
+    case TOOL_EDGE:
       break;
-    case TOOL_ZOOM_IN: // #tool-zoom-in
+    case TOOL_ZOOM_IN:
+      scale = scale * 1.25;
+      redraw();
       break;
-    case TOOL_ZOOM_OUT: // #tool-zoom-out
+    case TOOL_ZOOM_OUT:
+      scale = scale * 0.75;
+      redraw();
       break;
   }
 }
 
+/**
+ * Handles mouse down events on the canvas.
+ *
+ * @param {any} event the event
+ */
 function handleCanvasMouseDown(event) {
   switch (currentTool) {
     case TOOL_PAN:
@@ -443,6 +532,11 @@ function handleCanvasMouseDown(event) {
   }
 }
 
+/**
+ * Handles mouse up events on the canvas.
+ *
+ * @param {any} event the event
+ */
 function handleCanvasMouseUp(event) {
   switch (currentTool) {
     case TOOL_PAN:
@@ -454,6 +548,11 @@ function handleCanvasMouseUp(event) {
   }
 }
 
+/**
+ * Handles mouse movement events on the canvas.
+ *
+ * @param {any} event the event
+ */
 function handleCanvasMouseMove(event) {
   switch (currentTool) {
     case TOOL_PAN:
@@ -473,6 +572,7 @@ function handleCanvasMouseMove(event) {
  * Gets the stroke for a node type
  *
  * @param {number} type node type
+ * @returns {string} the stroke for the node type
  */
 function getNodeTypeStrokeStyle(type) {
   return 'black';
@@ -482,6 +582,7 @@ function getNodeTypeStrokeStyle(type) {
  * Gets the fill for a node type
  *
  * @param {number} type node type
+ * @returns {string} the fill for a node type
  */
 function getNodeTypeFillStyle(type) {
   const color = nodeTypeColors[type];
@@ -494,6 +595,17 @@ function getNodeTypeFillStyle(type) {
 function redraw() {
   const floor = floors[currentFloor];
   canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+
+  canvasCtx.strokeStyle = 'black';
+  canvasCtx.beginPath();
+  canvasCtx.moveTo(convertToDrawingScale(-canvasWidth / scale, panOffsetX), convertToDrawingScale(0, panOffsetY));
+  canvasCtx.lineTo(convertToDrawingScale(canvasWidth / scale, panOffsetX), convertToDrawingScale(0, panOffsetY));
+  canvasCtx.stroke();
+
+  canvasCtx.beginPath();
+  canvasCtx.moveTo(convertToDrawingScale(0, panOffsetX), convertToDrawingScale(-canvasHeight / scale, panOffsetY));
+  canvasCtx.lineTo(convertToDrawingScale(0, panOffsetX), convertToDrawingScale(canvasHeight / scale, panOffsetY));
+  canvasCtx.stroke();
 
   if (floor.img) {
     let imgDrawWidth = floor.imgWidth;
@@ -508,7 +620,7 @@ function redraw() {
       imgDrawWidth = canvasWidth;
       imgDrawHeight = canvasWidth * (floor.imgHeight / floor.imgWidth);
     }
-    canvasCtx.drawImage(floor.img, panOffsetX, panOffsetY, imgDrawWidth, imgDrawHeight);
+    canvasCtx.drawImage(floor.img, convertToDrawingScale(0, panOffsetX), convertToDrawingScale(0, panOffsetY), imgDrawWidth * scale, imgDrawHeight * scale);
   }
 
   for (let i = 0; i < floor.nodes.length; i++) {
@@ -516,7 +628,7 @@ function redraw() {
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
     canvasCtx.fillStyle = getNodeTypeFillStyle(node.type);
     canvasCtx.beginPath();
-    canvasCtx.ellipse(node.x + panOffsetX, node.y + panOffsetY, nodeSize, nodeSize, 0, 0, 2 * Math.PI);
+    canvasCtx.ellipse(convertToDrawingScale(node.x, panOffsetX), convertToDrawingScale(node.y, panOffsetY), nodeSize, nodeSize, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
     canvasCtx.fill();
   }
@@ -524,7 +636,7 @@ function redraw() {
   if (selectedNode != null) {
     canvasCtx.strokeStyle = 'blue';
     canvasCtx.beginPath();
-    canvasCtx.ellipse(selectedNode.x + panOffsetX, selectedNode.y + panOffsetY, nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.ellipse(convertToDrawingScale(selectedNode.x, panOffsetX), convertToDrawingScale(selectedNode.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
   }
 }
