@@ -101,6 +101,28 @@ let panOffsetY = 0;
  * TOOLS
  ************************************************/
 
+function handleKeyPress(event) {
+  switch (event.target.tagName.toLowerCase()) {
+    case "input":
+    case "textarea":
+      break;
+    default:
+      const oldTool = currentTool;
+      switch (event.keyCode) {
+        case 83: case 84: currentTool = TOOL_SELECT; break;
+        case 80: case 32: currentTool = TOOL_PAN; break;
+        case 78: currentTool = TOOL_ADD; break;
+        case 82: currentTool = TOOL_REMOVE; break;
+        case 76: currentTool = TOOL_EDGE; break;
+        case 187: currentTool = TOOL_ZOOM_IN; break;
+        case 189: currentTool = TOOL_ZOOM_OUT; break;
+      }
+      if (oldTool !== currentTool) {
+        highlightCurrentTool();
+      }
+  }
+}
+
 /**
  * Adds a border around the currently selected tool, removes border around any others.
  */
