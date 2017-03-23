@@ -87,6 +87,14 @@ let canvasWidth = 0;
 // Height of the canvases
 let canvasHeight = 0;
 
+let panning = false;
+let panStartX = 0;
+let panStartY = 0;
+let panStartOffsetX = 0;
+let panStartOffsetY = 0;
+let panOffsetX = 0;
+let panOffsetY = 0;
+
 /************************************************
  * TOOLS
  ************************************************/
@@ -112,13 +120,13 @@ function highlightCurrentTool() {
  * @param {number} floor the floor to select from
  */
 function tryToSelectAt(x, y, floor) {
-  let selectedNode = null;
-  let selectedEdge = null;
+  selectedNode = null;
+  selectedEdge = null;
   let newMenu = null;
 
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x - x) <= NODE_SIZE && Math.abs(nodes[i].y - y) <= NODE_SIZE) {
+    if (Math.abs(nodes[i].x + panOffsetX - x) <= NODE_SIZE && Math.abs(nodes[i].y + panOffsetY - y) <= NODE_SIZE) {
       selectedNode = nodes[i];
       newMenu = MENU_NODE;
       break;
@@ -141,13 +149,14 @@ function tryToSelectAt(x, y, floor) {
 /**
  * Adds a new node to the graph.
  *
- * @param {number} x     x location of new node
- * @param {number} y     y location of new node
- * @param {number} floor floor to add new node to
- * @param {number} type  type of new node
+ * @param {number} x           x location of new node
+ * @param {number} y           y location of new node
+ * @param {number} floor       floor to add new node to
+ * @param {number} type        type of new node
+ * @param {boolean} withOffset true to add offset to x and y, false to ignore
  */
-function addNewNode(x, y, floor, type) {
-  const newNode = { x, y, type };
+function addNewNode(x, y, floor, type, withOffset) {
+  const newNode = { x: x - (withOffset ? panOffsetX : 0), y: y  - (withOffset ? panOffsetY : 0), type };
   floors[floor].nodes.push(newNode);
   return newNode;
 }
@@ -162,7 +171,7 @@ function addNewNode(x, y, floor, type) {
 function removeNode(x, y, floor) {
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x - x) <= NODE_SIZE && Math.abs(nodes[i].y - y) <= NODE_SIZE) {
+    if (Math.abs(nodes[i].x + panOffsetX - x) <= NODE_SIZE && Math.abs(nodes[i].y + panOffsetY - y) <= NODE_SIZE) {
       nodes.splice(i, 1);
       return;
     }
@@ -227,6 +236,8 @@ function handleFloorChange() {
     });
   } else if (/select/g.test(id)) {
     currentFloor = floor;
+    resetToBaseMenu();
+    redraw();
   }
 
   $('#base-floor').val(floors[currentFloor].name);
@@ -315,32 +326,37 @@ function handleCanvasClick(event) {
     default: // #tool-select
       tryToSelectAt(event.offsetX, event.offsetY, currentFloor);
       break;
-    case 1: // #tool-pan
+    case TOOL_PAN: // #tool-pan
       break;
-    case 2: // #tool-add
-      selectedNode = addNewNode(event.offsetX, event.offsetY, currentFloor, mostRecentNodeType);
+    case TOOL_ADD: // #tool-add
+      selectedNode = addNewNode(event.offsetX, event.offsetY, currentFloor, mostRecentNodeType, true);
       setCurrentMenu(MENU_NODE);
       redraw();
       break;
-    case 3: // #tool-remove
+    case TOOL_REMOVE: // #tool-remove
       removeNode(event.offsetX, event.offsetY, currentFloor);
       redraw();
       resetToBaseMenu();
       break;
-    case 4: // #tool-edge
+    case TOOL_EDGE: // #tool-edge
       break;
-    case 5: // #tool-zoom-in
+    case TOOL_ZOOM_IN: // #tool-zoom-in
       break;
-    case 6: // #tool-zoom-out
+    case TOOL_ZOOM_OUT: // #tool-zoom-out
       break;
   }
 }
 
 function handleCanvasMouseDown(event) {
   switch (currentTool) {
-    case 1:
+    case TOOL_PAN:
+      panStartOffsetX = panOffsetX;
+      panStartOffsetY = panOffsetY;
+      panStartX = event.offsetX;
+      panStartY = event.offsetY;
+      panning = true;
       break;
-    case 4:
+    case TOOL_EDGE:
       break;
     default: break; // do nothing
   }
@@ -348,9 +364,10 @@ function handleCanvasMouseDown(event) {
 
 function handleCanvasMouseUp(event) {
   switch (currentTool) {
-    case 1:
+    case TOOL_PAN:
+      panning = false;
       break;
-    case 4:
+    case TOOL_EDGE:
       break;
     default: break; // do nothing
   }
@@ -358,9 +375,14 @@ function handleCanvasMouseUp(event) {
 
 function handleCanvasMouseMove(event) {
   switch (currentTool) {
-    case 1:
+    case TOOL_PAN:
+      if (panning) {
+        panOffsetX = panStartOffsetX + (event.offsetX - panStartX);
+        panOffsetY = panStartOffsetY + (event.offsetY - panStartY);
+        redraw();
+      }
       break;
-    case 4:
+    case TOOL_EDGE:
       break;
     default: break; // do nothing
   }
@@ -382,11 +404,11 @@ function getNodeTypeStrokeStyle(type) {
  */
 function getNodeTypeFillStyle(type) {
   switch (type) {
-    case 0: return 'green';   // Doorway
-    case 1: return 'red';     // Staircase
-    case 2: return 'yellow';  // Elevator
-    case 3: return 'blue';    // Hallway
-    default: return 'black';  // Room
+    case NODE_TYPE_DOOR: return 'green';
+    case NODE_TYPE_STAIRS: return 'red';
+    case NODE_TYPE_ELEVATOR: return 'yellow';
+    case NODE_TYPE_HALL: return 'blue';
+    default: return 'black';
   }
 }
 
@@ -398,7 +420,7 @@ function redraw() {
   canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   if (floor.img) {
-    canvasCtx.drawImage(floor.img, 0, 0);
+    canvasCtx.drawImage(floor.img, panOffsetX, panOffsetY);
   }
 
   for (let i = 0; i < floor.nodes.length; i++) {
@@ -406,9 +428,17 @@ function redraw() {
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
     canvasCtx.fillStyle = getNodeTypeFillStyle(node.type);
     canvasCtx.beginPath();
-    canvasCtx.ellipse(node.x, node.y, NODE_SIZE, NODE_SIZE, 0, 0, 2 * Math.PI);
+    canvasCtx.ellipse(node.x + panOffsetX, node.y + panOffsetY, NODE_SIZE, NODE_SIZE, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
     canvasCtx.fill();
+  }
+
+  if (selectedNode != null) {
+    console.log(selectedNode);
+    canvasCtx.strokeStyle = 'blue';
+    canvasCtx.beginPath();
+    canvasCtx.ellipse(selectedNode.x + panOffsetX, selectedNode.y + panOffsetY, NODE_SIZE * 2, NODE_SIZE * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.stroke();
   }
 }
 
