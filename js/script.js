@@ -6,7 +6,7 @@
 const PROPERTIES_PANEL_WIDTH = 300;
 
 // Radius of a node
-const NODE_SIZE = 4;
+const DEFAULT_NODE_SIZE = 4;
 
 const MENU_BASE = 0;
 const MENU_NODE = 1;
@@ -31,15 +31,7 @@ const NODE_TYPE_ROOM = 4;
  ************************************************/
 
 // The list of floors
-const floors = [
-  {
-    name: 'First',
-    img: null,
-    imgName: '',
-    nodes: [],
-    edges: [],
-  },
-];
+const floors = [];
 // The floor currently being edited
 let currentFloor = 0;
 
@@ -73,7 +65,8 @@ const nodeTypeColors = [
   { r: 0, g: 0, b: 255 },
   { r: 0, g: 0, b: 0 },
 ];
-
+// Radius of nodes
+let nodeSize = DEFAULT_NODE_SIZE;
 // Most recently assigned node type
 let mostRecentNodeType = NODE_TYPE_DOOR;
 
@@ -135,7 +128,7 @@ function tryToSelectAt(x, y, floor) {
 
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x + panOffsetX - x) <= NODE_SIZE && Math.abs(nodes[i].y + panOffsetY - y) <= NODE_SIZE) {
+    if (Math.abs(nodes[i].x + panOffsetX - x) <= nodeSize && Math.abs(nodes[i].y + panOffsetY - y) <= nodeSize) {
       selectedNode = nodes[i];
       mostRecentNodeType = selectedNode.type;
       newMenu = MENU_NODE;
@@ -187,7 +180,7 @@ function addNewNode(x, y, floor, type, withOffset) {
 function removeNode(x, y, floor) {
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x + panOffsetX - x) <= NODE_SIZE && Math.abs(nodes[i].y + panOffsetY - y) <= NODE_SIZE) {
+    if (Math.abs(nodes[i].x + panOffsetX - x) <= nodeSize && Math.abs(nodes[i].y + panOffsetY - y) <= nodeSize) {
       nodes.splice(i, 1);
       return;
     }
@@ -201,11 +194,15 @@ function removeNode(x, y, floor) {
 /**
  * Sets the image of the floor.
  *
- * @param {number} floor the floor to set the image path of
- * @param {string} name  name of the image
- * @param {any}    img   image
+ * @param {number} floor  the floor to set the image path of
+ * @param {string} name   name of the image
+ * @param {any}    img    image
+ * @param {number} width  image width
+ * @param {number} height image height
  */
-function setFloorImage(floor, name, img) {
+function setFloorImage(floor, name, img, width, height) {
+  floors[floor].imgWidth = width;
+  floors[floor].imgHeight = height;
   floors[floor].imgName = name
   floors[floor].img = img;
   $('#base-floor-image').val(name);
@@ -226,7 +223,7 @@ function handleFloorChange() {
 
     floors.splice(floor, 1);
     if (currentFloor >= floors.length) {
-      currentFloor -= 1;
+      currentFloor = floors.length - 1;
     }
   } else if (/down/g.test(id)) {
     const floorMovingDown = floors[floor];
@@ -243,13 +240,7 @@ function handleFloorChange() {
       currentFloor = floor - 1;
     }
   } else if (/add/g.test(id)) {
-    floors.push({
-      name: 'New floor',
-      img: null,
-      imgName: '',
-      nodes: [],
-      edges: [],
-    });
+    addNewFloor('New floor');
   } else if (/select/g.test(id)) {
     currentFloor = floor;
     resetToBaseMenu();
@@ -292,6 +283,21 @@ function resetToBaseMenu() {
   selectedEdge = null;
   selectedNode = null;
   setCurrentMenu(MENU_BASE);
+}
+
+function addNewFloor(name) {
+  const newFloor = {
+    name,
+    img: null,
+    imgName: '',
+    nodes: [],
+    edges: [],
+    imgWidth: -1,
+    imgHeight: -1,
+  };
+
+  floors.push(newFloor);
+  return newFloor;
 }
 
 function setNodeTypeColorInput(r, g, b) {
@@ -388,8 +394,8 @@ function handleCanvasClick(event) {
       break;
     case TOOL_REMOVE: // #tool-remove
       removeNode(event.offsetX, event.offsetY, currentFloor);
-      redraw();
       resetToBaseMenu();
+      redraw();
       break;
     case TOOL_EDGE: // #tool-edge
       break;
@@ -468,7 +474,19 @@ function redraw() {
   canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
   if (floor.img) {
-    canvasCtx.drawImage(floor.img, panOffsetX, panOffsetY);
+    let imgDrawWidth = floor.imgWidth;
+    let imgDrawHeight = floor.imgHeight;
+    const widthDiff = canvasWidth - floor.imgWidth;
+    const heightDiff = canvasHeight - floor.imgHeight;
+    const widthIsMaxDiff = Math.max(widthDiff, heightDiff) === widthDiff;
+    if (widthIsMaxDiff) {
+      imgDrawHeight = canvasHeight;
+      imgDrawWidth = canvasHeight * (floor.imgWidth / floor.imgHeight);
+    } else {
+      imgDrawWidth = canvasWidth;
+      imgDrawHeight = canvasWidth * (floor.imgHeight / floor.imgWidth);
+    }
+    canvasCtx.drawImage(floor.img, panOffsetX, panOffsetY, imgDrawWidth, imgDrawHeight);
   }
 
   for (let i = 0; i < floor.nodes.length; i++) {
@@ -476,7 +494,7 @@ function redraw() {
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
     canvasCtx.fillStyle = getNodeTypeFillStyle(node.type);
     canvasCtx.beginPath();
-    canvasCtx.ellipse(node.x + panOffsetX, node.y + panOffsetY, NODE_SIZE, NODE_SIZE, 0, 0, 2 * Math.PI);
+    canvasCtx.ellipse(node.x + panOffsetX, node.y + panOffsetY, nodeSize, nodeSize, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
     canvasCtx.fill();
   }
@@ -484,7 +502,7 @@ function redraw() {
   if (selectedNode != null) {
     canvasCtx.strokeStyle = 'blue';
     canvasCtx.beginPath();
-    canvasCtx.ellipse(selectedNode.x + panOffsetX, selectedNode.y + panOffsetY, NODE_SIZE * 2, NODE_SIZE * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.ellipse(selectedNode.x + panOffsetX, selectedNode.y + panOffsetY, nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
   }
 }
@@ -516,7 +534,7 @@ function handleFloorImage(e) {
   reader.onload = function(event) {
     const img = new Image();
     img.onload = function() {
-      setFloorImage(currentFloor, e.target.files[0].name, img);
+      setFloorImage(currentFloor, e.target.files[0].name, img, this.width, this.height);
       redraw();
     }
     img.src = event.target.result;
@@ -535,6 +553,10 @@ function handleFloorImage(e) {
 
 // On ready
 $(document).ready(function() {
+  addNewFloor('First');
+
+  window.addEventListener('keydown', handleKeyPress, false);
+
   canvas = $('#contentCanvas');
   canvasCtx = document.getElementById('contentCanvas').getContext('2d');
   canvas.click(handleCanvasClick);
@@ -582,6 +604,13 @@ $(document).ready(function() {
   $('.node-color').change(function() {
     setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
   });
+  $('#node-size').on('input', (event) => {
+    nodeSize = event.target.value || DEFAULT_NODE_SIZE;
+    if (nodeSize < 0) {
+      nodeSize = DEFAULT_NODE_SIZE;
+    }
+    redraw();
+  });
   $('#node-x').on('input', (event) => {
     const node = selectedNode;
     if (node != null) {
@@ -590,7 +619,6 @@ $(document).ready(function() {
         x = parseFloat(event.target.value || '0');
       } catch (e) {}
       node.x = x;
-      console.log(x);
       redraw();
     }
   });
