@@ -65,6 +65,15 @@ const menus = [
 // Currently shown menu
 let currentMenu = MENU_BASE;
 
+// Colors of node types
+const nodeTypeColors = [
+  { r: 0, g: 255, b: 0 },
+  { r: 255, g: 0, b: 0 },
+  { r: 255, g: 255, b: 0 },
+  { r: 0, g: 0, b: 255 },
+  { r: 0, g: 0, b: 0 },
+];
+
 // Most recently assigned node type
 let mostRecentNodeType = NODE_TYPE_DOOR;
 
@@ -128,6 +137,7 @@ function tryToSelectAt(x, y, floor) {
   for (let i = 0; i < nodes.length; i++) {
     if (Math.abs(nodes[i].x + panOffsetX - x) <= NODE_SIZE && Math.abs(nodes[i].y + panOffsetY - y) <= NODE_SIZE) {
       selectedNode = nodes[i];
+      mostRecentNodeType = selectedNode.type;
       newMenu = MENU_NODE;
       break;
     }
@@ -156,7 +166,13 @@ function tryToSelectAt(x, y, floor) {
  * @param {boolean} withOffset true to add offset to x and y, false to ignore
  */
 function addNewNode(x, y, floor, type, withOffset) {
-  const newNode = { x: x - (withOffset ? panOffsetX : 0), y: y  - (withOffset ? panOffsetY : 0), type };
+  const newNode = {
+    x: x - (withOffset ? panOffsetX : 0),
+    y: y  - (withOffset ? panOffsetY : 0),
+    type,
+    id: '',
+    bid: '',
+  };
   floors[floor].nodes.push(newNode);
   return newNode;
 }
@@ -278,6 +294,36 @@ function resetToBaseMenu() {
   setCurrentMenu(MENU_BASE);
 }
 
+function setNodeTypeColorInput(r, g, b) {
+  $('#node-r').val(r);
+  $('#node-g').val(g);
+  $('#node-b').val(b);
+}
+
+function setNodeTypeColor(type, r, g, b) {
+  nodeTypeColors[type].r = r;
+  nodeTypeColors[type].g = g;
+  nodeTypeColors[type].b = b;
+  redraw();
+}
+
+function updateNodeType() {
+  const node = selectedNode;
+  if (node == null) {
+    return;
+  }
+
+  for (let i = 0; i < nodeTypeColors.length; i++) {
+    if (node.type === i) {
+      $(`#node-type-${i}`).addClass('selected-icon');
+    } else {
+      $(`#node-type-${i}`).removeClass('selected-icon');
+    }
+  }
+
+  setNodeTypeColorInput(nodeTypeColors[node.type].r, nodeTypeColors[node.type].g, nodeTypeColors[node.type].b);
+}
+
 /**
  * Sets the current menu in the side bar, hides all others.
  */
@@ -301,15 +347,22 @@ function setCurrentMenu(menu) {
  */
 function populateMenu(menu) {
   switch (menu) {
-    case 0: /* Base properties */
+    default: /* Base properties */
       $('#base-floor').val(floors[currentFloor].name);
       updateFloorList();
       break;
-    case 1: /* Node properties */
+    case MENU_NODE: /* Node properties */
+      const node = selectedNode;
+      if (node != null) {
+        updateNodeType();
+        // setNodeTypeColorInput(nodeTypeColors[node.type].r, nodeTypeColors[node.type].g, nodeTypeColors[node.type].b);
+        $('#node-bid').val(node.bid);
+        $('#node-id').val(node.id);
+        $('#node-x').val(Math.round(node.x));
+        $('#node-y').val(Math.round(node.y));
+      }
       break;
-    case 2: /* Edge properties */
-      break;
-    default: /* Nothing */
+    case MENU_EDGE: /* Edge properties */
       break;
   }
 }
@@ -403,13 +456,8 @@ function getNodeTypeStrokeStyle(type) {
  * @param {number} type node type
  */
 function getNodeTypeFillStyle(type) {
-  switch (type) {
-    case NODE_TYPE_DOOR: return 'green';
-    case NODE_TYPE_STAIRS: return 'red';
-    case NODE_TYPE_ELEVATOR: return 'yellow';
-    case NODE_TYPE_HALL: return 'blue';
-    default: return 'black';
-  }
+  const color = nodeTypeColors[type];
+  return `rgb(${color.r}, ${color.g}, ${color.b})`;
 }
 
 /**
@@ -434,7 +482,6 @@ function redraw() {
   }
 
   if (selectedNode != null) {
-    console.log(selectedNode);
     canvasCtx.strokeStyle = 'blue';
     canvasCtx.beginPath();
     canvasCtx.ellipse(selectedNode.x + panOffsetX, selectedNode.y + panOffsetY, NODE_SIZE * 2, NODE_SIZE * 2, 0, 0, 2 * Math.PI);
@@ -521,6 +568,55 @@ $(document).ready(function() {
 
   // Altering floors
   $('#base-floors').on('click', '.floor-change', handleFloorChange);
+
+  // Changing node properties
+  $('.node-type').click(function() {
+    const id = $(this).attr('id');
+    const type = parseInt(id.substr(id.lastIndexOf('-') + 1));
+    selectedNode.type = type;
+    mostRecentNodeType = type;
+    updateNodeType();
+    redraw();
+    // setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
+  });
+  $('.node-color').change(function() {
+    setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
+  });
+  $('#node-x').on('input', (event) => {
+    const node = selectedNode;
+    if (node != null) {
+      let x = node.x;
+      try {
+        x = parseFloat(event.target.value || '0');
+      } catch (e) {}
+      node.x = x;
+      console.log(x);
+      redraw();
+    }
+  });
+  $('#node-y').on('input', (event) => {
+    const node = selectedNode;
+    if (node != null) {
+      let y = node.y;
+      try {
+        y = parseFloat(event.target.value || '0');
+      } catch (e) {}
+      node.y = y;
+      redraw();
+    }
+  });
+  $('#node-bid').on('input', (event) => {
+    const node = selectedNode;
+    if (node != null) {
+      node.bid = event.target.value;
+    }
+  });
+  $('#node-id').on('input', (event) => {
+    const node = selectedNode;
+    if (node != null) {
+      node.id = event.target.value;
+    }
+  });
 });
 
 // Bind resize function

@@ -53,7 +53,7 @@ html, body {
   padding: 6px;
 }
 
-.tool {
+.tool, .node-type {
   cursor: pointer;
   border: 1px transparent solid;
 }
@@ -207,7 +207,7 @@ li.prop-list-item p {
 input[type=range] {
   flex: 1;
   height: 2em;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 input[type=range] {
