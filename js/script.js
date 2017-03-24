@@ -94,6 +94,9 @@ let selectedEdge = null;
  * VARIABLES - CANVAS
  ************************************************/
 
+// Name of the project
+let projectName = ''
+
 // For drawing the user generated content
 let canvas;
 // Graphics context for the canvas
@@ -327,6 +330,54 @@ function updateFloorList() {
   floorListElem.append('<li class="prop-list-item floor-change" id="floor-add">Add new floor</p></li>');
 }
 
+/**
+ * Updates the node list based on user input.
+ */
+function handleNodeChange() {
+  const id = $(this).attr('id');
+  const floor = floors[currentFloor];
+  const nodeIdx = parseInt(id.substr(id.lastIndexOf('-') + 1));
+  const node = floor.nodes[nodeIdx];
+
+  if (/delete/g.test(id)) {
+    nodes.splice(nodeIdx, 1);
+    if (node === selectedNode) {
+      selectedNode = null;
+      resetToBaseMenu();
+    }
+  } else if (/select/g.test(id)) {
+    selectedNode = node;
+    setCurrentMenu(MENU_NODE);
+  }
+
+  redraw();
+}
+
+/**
+ * Updates the list of nodes displayed to the user.
+ */
+function updateNodeList() {
+  const nodeListElem = $('#node-list');
+  nodeListElem.empty();
+  const floor = floors[currentFloor];
+  for (let i = 0; i < floor.nodes.length; i++) {
+    const node = floor.nodes[i];
+    const nodeElem = $(`<li class="prop-list-item${selectedNode === node ? " selected-node" : ""}"><p class="node-change" id="node=select-${i}">${getNodeDisplayName(node)}</p></li>`);
+    nodeElem.append(`<i class="material-icons md-red md-24 node-change" id="node-delete-${i}>close</i>"`);
+    nodeListElem.append(nodeElem);
+  }
+}
+
+/**
+ * Forms a display name for the node.
+ *
+ * @param {object} node node to get name of
+ * @returns {string} the name of the node
+ */
+function getNodeDisplayName(node) {
+  return `${node.bid || projectName}-${node.type}-${node.id} (${node.x}, ${node.y})`;
+}
+
 /************************************************
  * MENUS
  ************************************************/
@@ -437,6 +488,7 @@ function populateMenu(menu) {
       updateFloorList();
       break;
     case MENU_NODE: /* Node properties */
+      updateNodeList();
       const node = selectedNode;
       if (node != null) {
         updateNodeType();
@@ -596,15 +648,16 @@ function redraw() {
   const floor = floors[currentFloor];
   canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
 
+  canvasCtx.lineWidth = 2;
   canvasCtx.strokeStyle = 'black';
   canvasCtx.beginPath();
-  canvasCtx.moveTo(convertToDrawingScale(-canvasWidth / scale, panOffsetX), convertToDrawingScale(0, panOffsetY));
-  canvasCtx.lineTo(convertToDrawingScale(canvasWidth / scale, panOffsetX), convertToDrawingScale(0, panOffsetY));
+  canvasCtx.moveTo(0, convertToDrawingScale(0, panOffsetY));
+  canvasCtx.lineTo(canvasWidth, convertToDrawingScale(0, panOffsetY));
   canvasCtx.stroke();
 
   canvasCtx.beginPath();
-  canvasCtx.moveTo(convertToDrawingScale(0, panOffsetX), convertToDrawingScale(-canvasHeight / scale, panOffsetY));
-  canvasCtx.lineTo(convertToDrawingScale(0, panOffsetX), convertToDrawingScale(canvasHeight / scale, panOffsetY));
+  canvasCtx.moveTo(convertToDrawingScale(0, panOffsetX), 0);
+  canvasCtx.lineTo(convertToDrawingScale(0, panOffsetX), canvasHeight);
   canvasCtx.stroke();
 
   if (floor.img) {
@@ -722,16 +775,22 @@ $(document).ready(function() {
     updateFloorList();
   })
 
+  $('#base-name').on('input', (event) => {
+    projectName = event.target.value;
+  });
+
   // Altering floors
   $('#base-floors').on('click', '.floor-change', handleFloorChange);
 
   // Changing node properties
+  $('#node-list').on('click', '.node-change', handleNodeChange);
   $('.node-type').click(function() {
     const id = $(this).attr('id');
     const type = parseInt(id.substr(id.lastIndexOf('-') + 1));
     selectedNode.type = type;
     mostRecentNodeType = type;
     updateNodeType();
+    updateNodeList();
     redraw();
     // setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
   });
@@ -753,6 +812,7 @@ $(document).ready(function() {
         x = parseFloat(event.target.value || '0');
       } catch (e) {}
       node.x = x;
+      updateNodeList();
       redraw();
     }
   });
@@ -764,6 +824,7 @@ $(document).ready(function() {
         y = parseFloat(event.target.value || '0');
       } catch (e) {}
       node.y = y;
+      updateNodeList();
       redraw();
     }
   });
@@ -771,12 +832,14 @@ $(document).ready(function() {
     const node = selectedNode;
     if (node != null) {
       node.bid = event.target.value;
+      updateNodeList();
     }
   });
   $('#node-id').on('input', (event) => {
     const node = selectedNode;
     if (node != null) {
       node.id = event.target.value;
+      updateNodeList();
     }
   });
 });

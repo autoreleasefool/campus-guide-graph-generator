@@ -124,7 +124,7 @@ html, body {
   margin: 0 8px;
 }
 
-.floor-change {
+.floor-change, .node-change {
   cursor: pointer;
 }
 
@@ -149,7 +149,7 @@ ul.prop-list li:nth-child(even) {
   background-color: #D2D2D2;
 }
 
-ul.prop-list li:nth-child(even).selected-floor {
+ul.prop-list li:nth-child(even).selected-floor, ul.prop-list li:nth-child(even).selected-node {
   background-color: #ACA39A;
 }
 
@@ -168,7 +168,7 @@ li.prop-list-item p {
   padding: 0;
 }
 
-.selected-floor {
+.selected-floor, .selected-node {
   background-color: #ACA39A;
 }
 
