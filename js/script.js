@@ -90,6 +90,13 @@ let selectedNode = null;
 // The currently selected edge
 let selectedEdge = null;
 
+// The selected node that an edge will start from
+let edgeStartNode = null;
+// Target x of new edge
+let newEdgeX = -1;
+// Target y of new edge
+let newEdgeY = -1;
+
 /************************************************
  * VARIABLES - CANVAS
  ************************************************/
@@ -135,6 +142,11 @@ let panOffsetY = 0;
  * @param {any} event key event
  */
 function handleKeyPress(event) {
+  // Ignore key presses when creating a new edge
+  if (edgeStartNode != null) {
+    return;
+  }
+
   switch (event.target.tagName.toLowerCase()) {
     case "input":
     case "textarea":
@@ -177,26 +189,28 @@ function highlightCurrentTool() {
  * @param {number} x     x position of click
  * @param {number} y     y position of click
  * @param {number} floor the floor to select from
+ * @param {string} type  specific item type to check for
  */
-function tryToSelectAt(x, y, floor) {
+function tryToSelectAt(x, y, floor, type) {
   selectedNode = null;
   selectedEdge = null;
   let newMenu = null;
 
-  const nodes = floors[floor].nodes;
-  for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x - x) <= nodeSize / scale && Math.abs(nodes[i].y - y) <= nodeSize / scale) {
-      selectedNode = nodes[i];
+  if (type == null || type === 'node') {
+    const nearest = findNearestNode(x, y, floor);
+    if (nearest != null) {
+      selectedNode = nearest.node;
       mostRecentNodeType = selectedNode.type;
       newMenu = MENU_NODE;
-      break;
     }
   }
 
-  if (selectedNode == null) {
-    const edges = floors[floor].edges;
-    // TODO: select edge
-    for (let i = 0; i < edges.length; i++) {}
+  if (selectedNode == null && (type == null || type === 'edge')) {
+    const nearest = findNearestEdge(x, y, floor);
+    if (nearest != null) {
+      selectedEdge = nearest.edge;
+      newMenu = MENU_EDGE;
+    }
   }
 
   if (selectedNode == null && selectedEdge == null) {
@@ -235,14 +249,148 @@ function addNewNode(x, y, floor, type) {
  * @param {number} y     y location of node to remove
  * @param {number} floor floor to remove node from
  */
-function removeNode(x, y, floor) {
+function removeNodeAt(x, y, floor) {
   const nodes = floors[floor].nodes;
   for (let i = 0; i < nodes.length; i++) {
     if (Math.abs(nodes[i].x - x) <= nodeSize / scale && Math.abs(nodes[i].y - y) <= nodeSize / scale) {
-      nodes.splice(i, 1);
+      removeNode(nodes, i, floor);
       return;
     }
   }
+}
+
+/**
+ * Remove a node from a list, and remove any edges containing it.
+ *
+ * @param {array} nodes  the list of nodes to remove from`
+ * @param {number} index the index of the node to remove
+ * @param {number} floor the floor the node is being removed from
+ */
+function removeNode(nodes, index, floor) {
+  const removedNode = nodes[index];
+  nodes.splice(index, 1);
+  const edges = floors[floor].edges;
+  for (let i = 0; i < edges.length; i++) {
+    if (edgeContainsNode(edges[i], removedNode)) {
+      edges.splice(i, 1);
+      i -= 1;
+    }
+  }
+}
+
+/**
+ * Looks for a node at a location.
+ *
+ * @param {number} x     x location to look for node
+ * @param {number} y     y location to look for node
+ * @param {number} floor floor to select node from
+ */
+function findNearestNode(x, y, floor) {
+  const nodes = floors[floor].nodes;
+  let closestNode = -1;
+  let minDistance = -1;
+  for (let i = 0; i < nodes.length; i++) {
+    const distance = distanceBetweenPoints(nodes[i].x, nodes[i].y, x, y);
+    if (distance < minDistance || minDistance === -1) {
+      minDistance = distance;
+      closestNode = i;
+    }
+  }
+
+  if (closestNode != -1 && minDistance <= nodeSize / scale) {
+    return { node: nodes[closestNode], i: closestNode };
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Looks for an edge at a location.
+ *
+ * @param {*} x     x location to look for edge
+ * @param {*} y     y location to look for edge
+ * @param {*} floor floor to select edge from
+ */
+function findNearestEdge(x, y, floor) {
+  const edges = floors[floor].edges;
+  let closestEdge = -1;
+  let minDistance = -1;
+  for (let i = 0; i < edges.length; i++) {
+    const distance = distanceToEdge(x, y, edges[i]);
+    if (distance < minDistance || minDistance === -1) {
+      minDistance = distance;
+      closestEdge = i;
+    }
+  }
+
+  if (closestEdge != -1 && minDistance <= nodeSize / scale) {
+    return { edge: edges[closestEdge], i: closestEdge };
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Adds a new edge to the floor
+ *
+ * @param {object} nodeA starting node of the edge
+ * @param {object} nodeB ending node of the edge
+ * @param {number} floor the floor the edge is on
+ */
+function addNewEdge(nodeA, nodeB, floor) {
+  const newEdge = {
+    nodeA,
+    nodeB,
+    aToB: '',
+    bToA: '',
+    accessible: true,
+    closed: false,
+  };
+  floors[floor].edges.push(newEdge);
+  return newEdge
+}
+
+/**
+ * Checks if an edge's Node A or Node B are a certain node.
+ *
+ * @param {object} edge the edge to look at
+ * @param {object} node the node to look for
+ */
+function edgeContainsNode(edge, node) {
+  return (edge.nodeA === node || edge.nodeB === node);
+}
+
+/**
+ * Get the distance between two points.
+ *
+ * @param {number} x1 x location of first point
+ * @param {number} y1 y location of first point
+ * @param {number} x2 x location of second point
+ * @param {number} y2 y location of second point
+ */
+function distanceBetweenPoints(x1, y1, x2, y2) {
+  return Math.sqrt(Math.pow(x1 - x2, 2) + Math.pow(y1 - y2, 2));
+}
+
+/**
+ * Get the distance between a point and an edge.
+ *
+ * @param {number} x    x location to get distance from
+ * @param {number} y    y location to get distance from
+ * @param {object} edge edge to find distance to
+ */
+function distanceToEdge(x, y, edge) {
+  const p = { x, y };
+  const v = { x: edge.nodeA.x, y: edge.nodeA.y };
+  const w = { x: edge.nodeB.x, y: edge.nodeB.y };
+  const l2 = Math.pow(v.x - w.x, 2) + Math.pow(v.y - w.y, 2);
+  if (l2 == 0) {
+    return distanceBetweenPoints(p.x, p.y, v.x, v.y);
+  }
+
+  let t = ((p.x - v.x) * (w.x - v.x) + (p.y - v.y) * (w.y - v.y)) / l2;
+  t = Math.max(0, Math.min(1, t));
+  return distanceBetweenPoints(p.x, p.y, v.x + t * (w.x - v.x), v.y + t * (w.y - v.y));
 }
 
 /************************************************
@@ -499,6 +647,15 @@ function populateMenu(menu) {
       }
       break;
     case MENU_EDGE: /* Edge properties */
+      const edge = selectedEdge;
+      if (edge != null) {
+        $('#edge-node-a').val(getNodeDisplayName(edge.nodeA));
+        $('#edge-node-b').val(getNodeDisplayName(edge.nodeB));
+        $('#a-to-b').val(edge.aToB);
+        $('#b-to-a').val(edge.bToA);
+        $('#edge-accessible').val(edge.accessible);
+        $('#edge-closed').val(edge.closed);
+      }
       break;
   }
 }
@@ -547,7 +704,7 @@ function handleCanvasClick(event) {
       redraw();
       break;
     case TOOL_REMOVE:
-      removeNode(eventX, eventY, currentFloor);
+      removeNodeAt(eventX, eventY, currentFloor);
       resetToBaseMenu();
       redraw();
       break;
@@ -579,6 +736,13 @@ function handleCanvasMouseDown(event) {
       panning = true;
       break;
     case TOOL_EDGE:
+      newEdgeX = convertToPointerScale(event.offsetX, panOffsetX);
+      newEdgeY = convertToPointerScale(event.offsetY, panOffsetY);
+      edgeStartNode = findNearestNode(convertToPointerScale(event.offsetX, panOffsetX), convertToPointerScale(event.offsetY, panOffsetY), currentFloor);
+      if (edgeStartNode != null) {
+        edgeStartNode = edgeStartNode.node;
+      }
+      redraw();
       break;
     default: break; // do nothing
   }
@@ -595,6 +759,31 @@ function handleCanvasMouseUp(event) {
       panning = false;
       break;
     case TOOL_EDGE:
+      if (edgeStartNode != null) {
+        const floor = floors[currentFloor];
+        const startNode = edgeStartNode;
+        let endNode = findNearestNode(convertToPointerScale(event.offsetX, panOffsetX), convertToPointerScale(event.offsetY, panOffsetY), currentFloor);
+        edgeStartNode = null;
+
+        if (endNode == null) {
+          redraw();
+          return;
+        } else {
+          endNode = endNode.node;
+        }
+
+        // Check to make sure the edge is unique
+        for (let i = 0; i < floor.edges.length; i++) {
+          if (edgeContainsNode(floor.edges[i], startNode) && edgeContainsNode(floor.edges[i], endNode)) {
+            redraw();
+            return;
+          }
+        }
+
+        selectedEdge = addNewEdge(startNode, endNode, currentFloor);
+        setCurrentMenu(MENU_EDGE);
+        redraw();
+      }
       break;
     default: break; // do nothing
   }
@@ -615,6 +804,12 @@ function handleCanvasMouseMove(event) {
       }
       break;
     case TOOL_EDGE:
+      selectedNode = null;
+      if (edgeStartNode != null) {
+        newEdgeX = convertToPointerScale(event.offsetX, panOffsetX);
+        newEdgeY = convertToPointerScale(event.offsetY, panOffsetY);
+        redraw();
+      }
       break;
     default: break; // do nothing
   }
@@ -676,6 +871,21 @@ function redraw() {
     canvasCtx.drawImage(floor.img, convertToDrawingScale(0, panOffsetX), convertToDrawingScale(0, panOffsetY), imgDrawWidth * scale, imgDrawHeight * scale);
   }
 
+  // Draw edges
+  canvasCtx.lineWidth = 2;
+  canvasCtx.strokeStyle = 'black';
+  for (let i = 0; i < floor.edges.length; i++) {
+    const edge = floor.edges[i];
+    if (edge === selectedEdge) {
+      continue;
+    }
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(convertToDrawingScale(edge.nodeA.x, panOffsetX), convertToDrawingScale(edge.nodeA.y, panOffsetY));
+    canvasCtx.lineTo(convertToDrawingScale(edge.nodeB.x, panOffsetX), convertToDrawingScale(edge.nodeB.y, panOffsetY));
+    canvasCtx.stroke();
+  }
+
+  // Draw nodes
   for (let i = 0; i < floor.nodes.length; i++) {
     const node = floor.nodes[i];
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
@@ -686,10 +896,47 @@ function redraw() {
     canvasCtx.fill();
   }
 
+  canvasCtx.lineWidth = 2;
+  canvasCtx.strokeStyle = 'blue';
+
+  // Draw selected node
   if (selectedNode != null) {
-    canvasCtx.strokeStyle = 'blue';
     canvasCtx.beginPath();
     canvasCtx.ellipse(convertToDrawingScale(selectedNode.x, panOffsetX), convertToDrawingScale(selectedNode.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.stroke();
+  }
+
+   // Draw selected edge
+  if (selectedEdge != null) {
+    canvasCtx.lineWidth = 4;
+    canvasCtx.strokeStyle = 'blue';
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(convertToDrawingScale(selectedEdge.nodeA.x, panOffsetX), convertToDrawingScale(selectedEdge.nodeA.y, panOffsetY));
+    canvasCtx.lineTo(convertToDrawingScale(selectedEdge.nodeB.x, panOffsetX), convertToDrawingScale(selectedEdge.nodeB.y, panOffsetY));
+    canvasCtx.stroke();
+
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+    canvasCtx.ellipse(convertToDrawingScale(selectedEdge.nodeA.x, panOffsetX), convertToDrawingScale(selectedEdge.nodeA.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.stroke();
+    canvasCtx.beginPath();
+    canvasCtx.ellipse(convertToDrawingScale(selectedEdge.nodeB.x, panOffsetX), convertToDrawingScale(selectedEdge.nodeB.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.stroke();
+  }
+
+  // Draw edge being created
+  if (edgeStartNode != null) {
+    canvasCtx.strokeStyle = 'red';
+    canvasCtx.lineWidth = 2;
+    canvasCtx.beginPath();
+    canvasCtx.ellipse(convertToDrawingScale(edgeStartNode.x, panOffsetX), convertToDrawingScale(edgeStartNode.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
+    canvasCtx.stroke();
+
+    canvasCtx.lineWidth = 4;
+    canvasCtx.strokeStyle = 'green';
+    canvasCtx.beginPath();
+    canvasCtx.moveTo(convertToDrawingScale(edgeStartNode.x, panOffsetX), convertToDrawingScale(edgeStartNode.y, panOffsetY));
+    canvasCtx.lineTo(convertToDrawingScale(newEdgeX, panOffsetX), convertToDrawingScale(newEdgeY, panOffsetY));
     canvasCtx.stroke();
   }
 }
@@ -781,6 +1028,32 @@ $(document).ready(function() {
 
   // Altering floors
   $('#base-floors').on('click', '.floor-change', handleFloorChange);
+
+  // Changing edge properties
+  $('#a-to-b').on('input', (event) => {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.aToB = event.target.value;
+    }
+  })
+  $('#b-to-a').on('input', (event) => {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.bToA = event.target.value;
+    }
+  })
+  $('#edge-accessible').change(function() {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.accessible = this.checked;
+    }
+  });
+  $('#edge-closed').change(function() {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.closed = this.checked;
+    }
+  });
 
   // Changing node properties
   $('#node-list').on('click', '.node-change', handleNodeChange);
