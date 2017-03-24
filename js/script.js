@@ -632,6 +632,44 @@ function setCurrentMenu(menu) {
 function populateMenu(menu) {
   switch (menu) {
     default: /* Base properties */
+      const nodeTypeCount = [];
+      let edgeCount = { floor: 0, total: 0 };
+
+      for (let i = 0; i < nodeTypeColors.length; i++) {
+        nodeTypeCount.push({ floor: 0, total: 0 });
+      }
+
+      for (let i = 0; i < floors.length; i++) {
+        const nodes = floors[i].nodes;
+        for (let j = 0; j < nodes.length; j++) {
+          nodeTypeCount[nodes[j].type].total += 1;
+          if (i === currentFloor) {
+            nodeTypeCount[nodes[j].type].floor += 1;
+          }
+        }
+        edgeCount.total += floors[i].edges.length;
+        if (i === currentFloor) {
+          edgeCount.floor = floors[i].edges.length;
+        }
+      }
+
+      const nodeCount = { floor: 0, total: 0 };
+      for (let i = 0; i < nodeTypeColors.length; i++) {
+        const nodeTypeCountElem = $(`#node-count-${i}`);
+        nodeTypeCountElem.find('.floor').html(nodeTypeCount[i].floor);
+        nodeTypeCountElem.find('.all').html(nodeTypeCount[i].total);
+        nodeCount.floor += nodeTypeCount[i].floor;
+        nodeCount.total += nodeTypeCount[i].total;
+      }
+
+      const nodeCountElem = $('#node-count-total');
+      nodeCountElem.find('.floor').html(nodeCount.floor);
+      nodeCountElem.find('.all').html(nodeCount.total);
+
+      const edgeCountElem = $('#edge-count');
+      edgeCountElem.find('.floor').html(edgeCount.floor);
+      edgeCountElem.find('.all').html(edgeCount.total);
+
       $('#base-floor').val(floors[currentFloor].name);
       updateFloorList();
       break;
