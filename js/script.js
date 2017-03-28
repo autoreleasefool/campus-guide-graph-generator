@@ -338,6 +338,12 @@ function findNearestEdge(x, y, floor) {
  * @param {number} floor the floor the edge is on
  */
 function addNewEdge(nodeA, nodeB, floor) {
+  if (getNodeName(nodeA).localeCompare(getNodeName(nodeB)) > 0) {
+    const temp = nodeA;
+    nodeA = nodeB;
+    nodeB = temp;
+  }
+
   const newEdge = {
     nodeA,
     nodeB,
@@ -526,6 +532,16 @@ function getNodeDisplayName(node) {
   return `${node.bid || projectName}-${node.type}-${node.id} (${node.x}, ${node.y})`;
 }
 
+/**
+ * Forms a name for the node.
+ *
+ * @param {object} node node to get name of
+ * @returns {string} the name of the node
+ */
+function getNodeName(node) {
+  return `${node.bid || projectName}-${node.type}-${node.id}`;
+}
+
 /************************************************
  * MENUS
  ************************************************/
@@ -692,7 +708,7 @@ function populateMenu(menu) {
         $('#a-to-b').val(edge.aToB);
         $('#b-to-a').val(edge.bToA);
         $('#edge-accessible').val(edge.accessible);
-        $('#edge-closed').val(edge.closed);
+        $('#edge-closed').prop('checked', edge.closed);
       }
       break;
   }
@@ -880,6 +896,7 @@ function getNodeTypeFillStyle(type) {
 function redraw() {
   const floor = floors[currentFloor];
   canvasCtx.clearRect(0, 0, canvasWidth, canvasHeight);
+  canvasCtx.font="14px San Francisco";
 
   canvasCtx.lineWidth = 2;
   canvasCtx.strokeStyle = 'black';
@@ -911,12 +928,18 @@ function redraw() {
 
   // Draw edges
   canvasCtx.lineWidth = 2;
-  canvasCtx.strokeStyle = 'black';
   for (let i = 0; i < floor.edges.length; i++) {
     const edge = floor.edges[i];
     if (edge === selectedEdge) {
       continue;
     }
+
+    if (edge.aToB.length === 0 || edge.bToA.length === 0) {
+      canvasCtx.strokeStyle = 'black';
+    } else {
+      canvasCtx.strokeStyle = '#8F001A';
+    }
+
     canvasCtx.beginPath();
     canvasCtx.moveTo(convertToDrawingScale(edge.nodeA.x, panOffsetX), convertToDrawingScale(edge.nodeA.y, panOffsetY));
     canvasCtx.lineTo(convertToDrawingScale(edge.nodeB.x, panOffsetX), convertToDrawingScale(edge.nodeB.y, panOffsetY));
@@ -960,6 +983,10 @@ function redraw() {
     canvasCtx.beginPath();
     canvasCtx.ellipse(convertToDrawingScale(selectedEdge.nodeB.x, panOffsetX), convertToDrawingScale(selectedEdge.nodeB.y, panOffsetY), nodeSize * 2, nodeSize * 2, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
+
+    canvasCtx.fillStyle = 'black';
+    canvasCtx.fillText(getNodeDisplayName(selectedEdge.nodeA), convertToDrawingScale(selectedEdge.nodeA.x, panOffsetX) + 10, convertToDrawingScale(selectedEdge.nodeA.y, panOffsetY) - 10);
+    canvasCtx.fillText(getNodeDisplayName(selectedEdge.nodeB), convertToDrawingScale(selectedEdge.nodeB.x, panOffsetX) + 10, convertToDrawingScale(selectedEdge.nodeB.y, panOffsetY) - 10);
   }
 
   // Draw edge being created
@@ -993,6 +1020,44 @@ function handleResize() {
 }
 
 /************************************************
+ * GRAPH GENERATOR
+ ************************************************/
+
+function generateGraphFile() {
+  const nodes = [];
+
+}
+
+function generateExcludedNodesFile() {
+  const edges = [];
+  for (let floorIdx = 0; floorIdx < floors.length; floorIdx++) {
+    const floor = floors[floorIdx];
+    for (let edgeIdx = 0; edgeIdx < floor.edges.length; edgeIdx++) {
+      const edge = floor.edges[edgeIdx];
+      if (edge.closed) {
+        edges.push(edge);
+      }
+    }
+  }
+
+  edges.sort((a, b) => {
+    const aVsA = getNodeName(a.nodeA).toLowerCase().localeCompare(getNodeName(b.nodeA).toLowerCase());
+    if (aVsA === 0) {
+      return getNodeName(a.nodeB).toLowerCase().localeCompare(getNodeName(b.nodeB).toLowerCase());
+    } else {
+      return aVsA;
+    }
+  });
+
+  let file = ''
+  for (let i = 0; i < edges.length; i++) {
+    file += `${getNodeName(edges[i].nodeA)} ${getNodeName(edges[i].nodeB)}\n`;
+  }
+
+  download(`${projectName}_excluded.txt`, file);
+}
+
+/************************************************
  * FILE I/O
  ************************************************/
 
@@ -1016,6 +1081,27 @@ function handleFloorImage(e) {
     reader.readAsDataURL(e.target.files[0]);
   } else {
     alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
+  }
+}
+
+/**
+ * Prompts the user to download a text file.
+ *
+ * @param {string} filename name of file for download
+ * @param {string} text     content of file
+ */
+function download(filename, text) {
+  var pom = document.createElement('a');
+  pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+  pom.setAttribute('download', filename);
+
+  if (document.createEvent) {
+    var event = document.createEvent('MouseEvents');
+    event.initEvent('click', true, true);
+    pom.dispatchEvent(event);
+  }
+  else {
+    pom.click();
   }
 }
 
