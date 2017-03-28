@@ -39,79 +39,99 @@
 
       <div id="base-props" class="prop">
 
-        <label for="base-name">Name</label>
-        <input type="text" id="base-name" name="base-name" placeholder="MHN" />
-
-        <hr />
-
-        <label>Floors</label>
-        <div class="prop-list-container">
-          <ul id="base-floors" class="prop-list">
-          </ul>
+        <div class="button" id="load">
+          <p>Load</p>
         </div>
 
-        <label for="base-floor">Floor name</label>
-        <input type="text" id="base-floor" name="base-floor" placeholder="First" />
-
-        <label for="base-floor-image">Image</label>
-        <div class="filepath-input-container">
-          <input disabled class="filepath-input" type="text" id="base-floor-image" name="base-floor-image" placeholder="/Users/joseph/Desktop/image.png" />
-          <i class="material-icons md-light md-24 prop-folder" for="floor-image">folder</i>
-          <input type="file" id="floor-image" />
+        <div class="button" id="save">
+          <p>Save</p>
         </div>
 
-        <hr />
+        <div class="button" id="generate-graph">
+          <p>Generate graph</p>
+        </div>
 
-        <table id="graph-stats">
-          <thead>
-            <tr>
-              <th>Type</th>
-              <th>Current</th>
-              <th>All</th>
-            <tr>
-          </thead>
-          <tbody>
-            <tr id="node-count-0">
-              <td><i class="material-icons md-light md-24">store</i></td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="node-count-1">
-              <td><i class="material-icons md-light md-24">layers</i></td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="node-count-2">
-              <td><i class="material-icons md-light md-24">swap_vert</i></td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="node-count-3">
-              <td><i class="material-icons md-light md-24">transfer_within_a_station</i></td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="node-count-4">
-              <td><i class="material-icons md-light md-24">room</i></td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="node-count-total">
-              <td>Nodes</td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-            <tr id="edge-count">
-              <td>Edges</td>
-              <td class="floor">0</td>
-              <td class="all">0</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="button" id="generate-excluded">
+          <p>Generate excluded</p>
+        </div>
+
+        <div class="padded prop">
+
+          <label for="base-name">Name</label>
+          <input type="text" id="base-name" name="base-name" placeholder="MHN" />
+
+          <hr />
+
+          <label>Floors</label>
+          <div class="prop-list-container">
+            <ul id="base-floors" class="prop-list">
+            </ul>
+          </div>
+
+          <label for="base-floor">Floor name</label>
+          <input type="text" id="base-floor" name="base-floor" placeholder="First" />
+
+          <label for="base-floor-image">Image</label>
+          <div class="filepath-input-container">
+            <input disabled class="filepath-input" type="text" id="base-floor-image" name="base-floor-image" placeholder="/Users/joseph/Desktop/image.png" />
+            <i class="material-icons md-light md-24 prop-folder" for="floor-image">folder</i>
+            <input type="file" id="floor-image" />
+          </div>
+
+          <hr />
+
+          <table id="graph-stats">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Current</th>
+                <th>All</th>
+              <tr>
+            </thead>
+            <tbody>
+              <tr id="node-count-0">
+                <td><i class="material-icons md-light md-24">store</i></td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="node-count-1">
+                <td><i class="material-icons md-light md-24">layers</i></td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="node-count-2">
+                <td><i class="material-icons md-light md-24">swap_vert</i></td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="node-count-3">
+                <td><i class="material-icons md-light md-24">transfer_within_a_station</i></td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="node-count-4">
+                <td><i class="material-icons md-light md-24">room</i></td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="node-count-total">
+                <td>Nodes</td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+              <tr id="edge-count">
+                <td>Edges</td>
+                <td class="floor">0</td>
+                <td class="all">0</td>
+              </tr>
+            </tbody>
+          </table>
+
+        </div>
 
       </div>
 
-      <div id="node-props" class="prop">
+      <div id="node-props" class="prop padded">
 
         <label for="node-bid">Building ID (optional)</label>
         <input type="text" id="node-bid" name="node-bid" placeholder="0" />
@@ -168,7 +188,7 @@
 
       </div>
 
-      <div id="edge-props" class="prop">
+      <div id="edge-props" class="prop padded">
 
         <label for="edge-node-a">Node A</label>
         <input disabled type="text" id="edge-node-a" name="edge-node-a" placeholder="0:s:0" />

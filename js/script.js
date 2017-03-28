@@ -1239,6 +1239,10 @@ $(document).ready(function() {
       updateNodeList();
     }
   });
+
+  // Import/export
+  $('#generate-excluded').click(generateExcludedNodesFile);
+  $('#generate-graph').click(generateGraphFile);
 });
 
 // Bind resize function
