@@ -338,12 +338,6 @@ function findNearestEdge(x, y, floor) {
  * @param {number} floor the floor the edge is on
  */
 function addNewEdge(nodeA, nodeB, floor) {
-  if (getNodeName(nodeA).localeCompare(getNodeName(nodeB)) > 0) {
-    const temp = nodeA;
-    nodeA = nodeB;
-    nodeB = temp;
-  }
-
   const newEdge = {
     nodeA,
     nodeB,
@@ -352,8 +346,36 @@ function addNewEdge(nodeA, nodeB, floor) {
     accessible: true,
     closed: false,
   };
+  fixEdgeNodeAssignments(newEdge);
   floors[floor].edges.push(newEdge);
   return newEdge
+}
+
+/**
+ * Assign nodes in an edge such that the one which comes first alphabetically is Node A.
+ *
+ * @param {object} edge edge to fix node assignments for
+ */
+function fixEdgeNodeAssignments(edge) {
+  if (getNodeName(edge.nodeA).localeCompare(getNodeName(edge.nodeB)) > 0) {
+    let temp = edge.nodeA;
+    edge.nodeA = edge.nodeB;
+    edge.nodeB = temp;
+
+    temp = edge.aToB;
+    edge.aToB = edge.bToA;
+    edge.bToA = temp;
+  }
+
+  if (edge.nodeA.bid === '' && edge.nodeB.bid !== '') {
+    const temp = edge.nodeA;
+    edge.nodeA = edge.nodeB;
+    edge.nodeB = temp;
+
+    temp = edge.aToB;
+    edge.aToB = edge.bToA;
+    edge.bToA = temp;
+  }
 }
 
 /**
@@ -529,7 +551,7 @@ function updateNodeList() {
  * @returns {string} the name of the node
  */
 function getNodeDisplayName(node) {
-  return `${node.bid || projectName}-${node.type}-${node.id} (${node.x}, ${node.y})`;
+  return `${node.bid}-${node.type}-${node.id} (${node.x}, ${node.y})`;
 }
 
 /**
@@ -539,7 +561,7 @@ function getNodeDisplayName(node) {
  * @returns {string} the name of the node
  */
 function getNodeName(node) {
-  return `${node.bid || projectName}-${node.type}-${node.id}`;
+  return `${node.bid}-${node.type}-${node.id}`;
 }
 
 /************************************************
@@ -601,6 +623,7 @@ function setNodeTypeColor(type, r, g, b) {
   nodeTypeColors[type].r = r;
   nodeTypeColors[type].g = g;
   nodeTypeColors[type].b = b;
+  $(`#node-type-${type}`).css({ color: getNodeTypeFillStyle(type) });
   redraw();
 }
 
@@ -950,7 +973,7 @@ function redraw() {
   for (let i = 0; i < floor.nodes.length; i++) {
     const node = floor.nodes[i];
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
-    canvasCtx.fillStyle = getNodeTypeFillStyle(node.type);
+    canvasCtx.fillStyle = node.type === NODE_TYPE_ROOM && node.id === '' ? 'black' : getNodeTypeFillStyle(node.type);
     canvasCtx.beginPath();
     canvasCtx.ellipse(convertToDrawingScale(node.x, panOffsetX), convertToDrawingScale(node.y, panOffsetY), nodeSize, nodeSize, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
@@ -1023,11 +1046,64 @@ function handleResize() {
  * GRAPH GENERATOR
  ************************************************/
 
-function generateGraphFile() {
-  const nodes = [];
+function saveProject() {
 
 }
 
+function loadProject() {
+
+}
+
+function assignNodeName(node, nodeIdCounts) {
+  if (node.id === '') {
+    node.id = nodeIdCounts[node.type].toString();
+    nodeIdCounts[node.type]++;
+  }
+}
+
+/**
+ * Generates a file containing data of all the edges in the graph.
+ */
+function generateGraphFile() {
+  const nodeIdCounts = [0, 0, 0, 0, 0];
+
+  const edges = [];
+  for (let floorIdx = 0; floorIdx < floors.length; floorIdx++) {
+    const floor = floors[floorIdx];
+    for (let edgeIdx = 0; edgeIdx < floor.edges.length; edgeIdx++) {
+      const edge = floor.edges[edgeIdx];
+      assignNodeName(edge.nodeA, nodeIdCounts);
+      assignNodeName(edge.nodeB, nodeIdCounts);
+      fixEdgeNodeAssignments(edge);
+      edges.push(edge);
+    }
+  }
+
+  edges.sort((a, b) => {
+    const aVsA = getNodeName(a.nodeA).toLowerCase().localeCompare(getNodeName(b.nodeA).toLowerCase());
+    if (aVsA === 0) {
+      return getNodeName(a.nodeB).toLowerCase().localeCompare(getNodeName(b.nodeB).toLowerCase());
+    } else {
+      return aVsA;
+    }
+  });
+
+  let file = ''
+  for (let i = 0; i < edges.length; i++) {
+    const nameA = getNodeName(edges[i].nodeA);
+    const nameB = getNodeName(edges[i].nodeB);
+    const aToB = edges[i].aToB;
+    const bToA = edges[i].bToA;
+    const accessible = edges[i].accessible ? 'T' : 'F';
+    file += `${nameA}|${nameB}|${accessible}|${aToB}|${bToA}|\n`;
+  }
+
+  download(`${projectName}.txt`, file);
+}
+
+/**
+ * Generates a file containing all of the excluded edges in the graph.
+ */
 function generateExcludedNodesFile() {
   const edges = [];
   for (let floorIdx = 0; floorIdx < floors.length; floorIdx++) {
@@ -1112,6 +1188,10 @@ function download(filename, text) {
 // On ready
 $(document).ready(function() {
   addNewFloor('First');
+
+  for (let i = 0; i < nodeTypeColors.length; i++) {
+    $(`#node-type-${i}`).css({ color: getNodeTypeFillStyle(i) });
+  }
 
   window.addEventListener('keydown', handleKeyPress, false);
 
@@ -1241,6 +1321,8 @@ $(document).ready(function() {
   });
 
   // Import/export
+  $('#save').click(saveProject);
+  $('#save').click(loadProject);
   $('#generate-excluded').click(generateExcludedNodesFile);
   $('#generate-graph').click(generateGraphFile);
 });

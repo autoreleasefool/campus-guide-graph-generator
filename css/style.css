@@ -294,17 +294,18 @@ input#node-b[type=range]::-webkit-slider-runnable-track {
 }
 
 #load {
-  color: white;
-  background-color: #245E00;
+  color: black;
+  background-color: #F2F2F2;
 }
 
 #save {
-  color: white;
-  background-color: #2D2D2C;
+  color: black;
+  background-color: #ACA39A;
 }
 
 #generate-graph {
-  background-color: #F2F2F2;
+  color: white;
+  background-color: #80746C;
 }
 
 #generate-excluded {
