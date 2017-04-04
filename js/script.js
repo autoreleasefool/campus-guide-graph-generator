@@ -41,6 +41,11 @@ const NODE_TYPE_HALL = 3;
 // Nodes which represent rooms
 const NODE_TYPE_ROOM = 4;
 
+// Static canvas width for drawing images
+const BASE_CANVAS_WIDTH = 800;
+// Static canvas height for drawing images
+const BASE_CANVAS_HEIGHT = 800;
+
 /************************************************
  * VARIABLES - GRAPH
  ************************************************/
@@ -439,7 +444,6 @@ function setFloorImage(floor, name, img, width, height) {
   floors[floor].imgHeight = height;
   floors[floor].imgName = name
   floors[floor].img = img;
-  $('#base-floor-image').val(name);
 }
 
 /**
@@ -710,6 +714,7 @@ function populateMenu(menu) {
       edgeCountElem.find('.all').html(edgeCount.total);
 
       $('#base-floor').val(floors[currentFloor].name);
+      $('#base-floor-image').val(floors[currentFloor].imgName);
       updateFloorList();
       break;
     case MENU_NODE: /* Node properties */
@@ -936,15 +941,15 @@ function redraw() {
   if (floor.img) {
     let imgDrawWidth = floor.imgWidth;
     let imgDrawHeight = floor.imgHeight;
-    const widthDiff = canvasWidth - floor.imgWidth;
-    const heightDiff = canvasHeight - floor.imgHeight;
+    const widthDiff = BASE_CANVAS_WIDTH - floor.imgWidth;
+    const heightDiff = BASE_CANVAS_HEIGHT - floor.imgHeight;
     const widthIsMaxDiff = Math.max(widthDiff, heightDiff) === widthDiff;
     if (widthIsMaxDiff) {
-      imgDrawHeight = canvasHeight;
-      imgDrawWidth = canvasHeight * (floor.imgWidth / floor.imgHeight);
+      imgDrawHeight = BASE_CANVAS_HEIGHT;
+      imgDrawWidth = BASE_CANVAS_HEIGHT * (floor.imgWidth / floor.imgHeight);
     } else {
-      imgDrawWidth = canvasWidth;
-      imgDrawHeight = canvasWidth * (floor.imgHeight / floor.imgWidth);
+      imgDrawWidth = BASE_CANVAS_WIDTH;
+      imgDrawHeight = BASE_CANVAS_WIDTH * (floor.imgHeight / floor.imgWidth);
     }
     canvasCtx.drawImage(floor.img, convertToDrawingScale(0, panOffsetX), convertToDrawingScale(0, panOffsetY), imgDrawWidth * scale, imgDrawHeight * scale);
   }
@@ -1046,14 +1051,100 @@ function handleResize() {
  * GRAPH GENERATOR
  ************************************************/
 
+/**
+ * Parses a JSON object and set the project properties.
+ */
+function parseProject(json) {
+  selectedEdge = null;
+  selectedNode = null;
+  edgeStartNode = null;
+
+  if (typeof (json.floors) === 'object') {
+    while(floors.length > 0) {
+      floors.pop();
+    }
+
+    for (let i = 0; i < json.floors.length; i++) {
+      floors.push(json.floors[i]);
+    }
+  }
+
+  if (typeof (json.nodeTypeColors) === 'object') {
+    nodeTypeColors.length = 0;
+    for (let i = 0; i < json.nodeTypeColors.length; i++) {
+      nodeTypeColors.push(json.nodeTypeColors[i]);
+    }
+  }
+
+  if (typeof (json.nodeSize) === 'number') {
+    nodeSize = json.nodeSize;
+  }
+
+  if (typeof (json.projectName) === 'string') {
+    projectName = json.projectName;
+  }
+
+  currentFloor = 0;
+  currentTool = TOOL_PAN;
+  highlightCurrentTool();
+  resetToBaseMenu();
+  redraw();
+}
+
+/**
+ * Stores the project properties in a JSON object and then converts the object
+ * to a string and returns it.
+ */
+function projectToString() {
+  project = {};
+  project.projectName = projectName;
+  project.floors = JSON.parse(JSON.stringify(floors));
+  for (let i = 0; i < project.floors.length; i++) {
+    project.floors[i].img = null;
+  }
+  project.nodeTypeColors = nodeTypeColors;
+  project.nodeSize = nodeSize;
+  return JSON.stringify(project, null, 2);
+}
+
+/**
+ * Prompts the user to download the project.
+ */
 function saveProject() {
-
+  download(`${projectName}.gg`, projectToString());
 }
 
-function loadProject() {
+/**
+ * Prompts the user to load a project from their local file system.
+ */
+function loadProject(e) {
+  const reader = new FileReader();
+  reader.onload = function(event) {
+    let json = null;
+    try {
+      json = JSON.parse(event.target.result);
+    } catch (e) {
+      alert('Error parsing file!');
+      // Failed to parse JSON
+      return;
+    }
 
+    parseProject(json);
+  }
+
+  if (/text|javascript/ig.test(e.target.files[0].type)) {
+    reader.readAsText(e.target.files[0]);
+  } else {
+    alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
+  }
 }
 
+/**
+ * Assigns a name to a node if it does not have one.
+ *
+ * @param {object} node         the node to potentially assign a name to
+ * @param {array}  nodeIdCounts number of each node type created
+ */
 function assignNodeName(node, nodeIdCounts) {
   if (node.id === '') {
     node.id = nodeIdCounts[node.type].toString();
@@ -1143,20 +1234,39 @@ function generateExcludedNodesFile() {
  * @param {any} e the change event
  */
 function handleFloorImage(e) {
-  const reader = new FileReader();
-  reader.onload = function(event) {
-    const img = new Image();
-    img.onload = function() {
-      setFloorImage(currentFloor, e.target.files[0].name, img, this.width, this.height);
-      redraw();
-    }
-    img.src = event.target.result;
-  }
+  const totalFiles = e.target.files.length;
+  for (let i = 0; i < totalFiles; i++) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = function() {
+        if (totalFiles == 1) {
+          setFloorImage(currentFloor, e.target.files[i].name, img, this.width, this.height);
+          $('#base-floor-image').val(e.target.files[i].name);
+          redraw();
+        } else {
+          if (i < floors.length) {
+            setFloorImage(i, e.target.files[i].name, img, this.width, this.height);
+          } else {
+            addNewFloor(`New floor ${i}`);
+            setFloorImage(i, e.target.files[i].name, img, this.width, this.height);
+            updateFloorList();
+          }
 
-  if (/image\/(png|jpe?g)/ig.test(e.target.files[0].type)) {
-    reader.readAsDataURL(e.target.files[0]);
-  } else {
-    alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
+          if (i == currentFloor) {
+            $('#base-floor-image').val(e.target.files[i].name);
+            redraw();
+          }
+        }
+      }
+      img.src = event.target.result;
+    }
+
+    if (/image\/(png|jpe?g)/ig.test(e.target.files[i].type)) {
+      reader.readAsDataURL(e.target.files[i]);
+    } else {
+      alert(`You\'ve selected an invalid filetype: ${e.target.files[i].type}`);
+    }
   }
 }
 
@@ -1167,12 +1277,12 @@ function handleFloorImage(e) {
  * @param {string} text     content of file
  */
 function download(filename, text) {
-  var pom = document.createElement('a');
+  const pom = document.createElement('a');
   pom.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
   pom.setAttribute('download', filename);
 
   if (document.createEvent) {
-    var event = document.createEvent('MouseEvents');
+    const event = document.createEvent('MouseEvents');
     event.initEvent('click', true, true);
     pom.dispatchEvent(event);
   }
@@ -1320,9 +1430,14 @@ $(document).ready(function() {
     }
   });
 
+  // Handle user loading project
+  document.getElementById('load-project').addEventListener('change', loadProject, false);
+  $('#load').click(function() {
+    document.getElementById('load-project').click();
+  });
+
   // Import/export
   $('#save').click(saveProject);
-  $('#save').click(loadProject);
   $('#generate-excluded').click(generateExcludedNodesFile);
   $('#generate-graph').click(generateGraphFile);
 });
