@@ -568,6 +568,17 @@ function getNodeName(node) {
   return `${node.bid}-${node.type}-${node.id}`;
 }
 
+/**
+ * Calculates the distance between two nodes.
+ *
+ * @param {object} nodeA first node
+ * @param {object} nodeB second node
+ * @returns {number} the distance between the nodes
+ */
+function getDistanceBetweenNodes(nodeA, nodeB) {
+  return Math.sqrt(Math.pow(nodeB.x - nodeA.x, 2) + Math.pow(nodeB.y - nodeA.y, 2));
+}
+
 /************************************************
  * MENUS
  ************************************************/
@@ -1185,8 +1196,9 @@ function generateGraphFile() {
     const nameB = getNodeName(edges[i].nodeB);
     const aToB = edges[i].aToB;
     const bToA = edges[i].bToA;
+    const distance = getDistanceBetweenNodes(edges[i].nodeA, edges[i].nodeB);
     const accessible = edges[i].accessible ? 'T' : 'F';
-    file += `${nameA}|${nameB}|${accessible}|${aToB}|${bToA}|\n`;
+    file += `${nameA}|${nameB}|${distance.toFixed(2)}|${accessible}|${aToB}|${bToA}|\n`;
   }
 
   download(`${projectName}.txt`, file);
