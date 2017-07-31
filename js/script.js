@@ -85,6 +85,10 @@ const nodeTypeColors = [
   { r: 0, g: 0, b: 255 },
   { r: 0, g: 0, b: 0 },
 ];
+// Identify node types by a single character
+const nodeTypeIdentifiers = [
+  'D', 'S', 'E', 'H', 'R',
+];
 // Radius of nodes
 let nodeSize = DEFAULT_NODE_SIZE;
 // Most recently assigned node type
@@ -179,11 +183,11 @@ function handleKeyPress(event) {
  * Adds a border around the currently selected tool, removes border around any others.
  */
 function highlightCurrentTool() {
-  for (let i = 0; i < tools.length; i++) {
-    if (i === currentTool) {
-      $(tools[i]).addClass('selected-icon');
+  for (const tool of tools) {
+    if (tool === tools[currentTool]) {
+      $(tool).addClass('selected-icon');
     } else {
-      $(tools[i]).removeClass('selected-icon');
+      $(tool).removeClass('selected-icon');
     }
   }
 }
@@ -240,8 +244,10 @@ function addNewNode(x, y, floor, type) {
     x,
     y,
     type,
-    id: '',
+    additional: '',
+    name: '',
     bid: '',
+    assignedName: false,
   };
   floors[floor].nodes.push(newNode);
   return newNode;
@@ -346,10 +352,11 @@ function addNewEdge(nodeA, nodeB, floor) {
   const newEdge = {
     nodeA,
     nodeB,
-    aToB: '',
-    bToA: '',
+    direction: 'LR',
     accessible: true,
     closed: false,
+    aToB: true,
+    bToA: true,
   };
   fixEdgeNodeAssignments(newEdge);
   floors[floor].edges.push(newEdge);
@@ -366,20 +373,12 @@ function fixEdgeNodeAssignments(edge) {
     let temp = edge.nodeA;
     edge.nodeA = edge.nodeB;
     edge.nodeB = temp;
-
-    temp = edge.aToB;
-    edge.aToB = edge.bToA;
-    edge.bToA = temp;
   }
 
   if (edge.nodeA.bid === '' && edge.nodeB.bid !== '') {
     const temp = edge.nodeA;
     edge.nodeA = edge.nodeB;
     edge.nodeB = temp;
-
-    temp = edge.aToB;
-    edge.aToB = edge.bToA;
-    edge.bToA = temp;
   }
 }
 
@@ -555,7 +554,7 @@ function updateNodeList() {
  * @returns {string} the name of the node
  */
 function getNodeDisplayName(node) {
-  return `${node.bid}-${node.type}-${node.id} (${node.x}, ${node.y})`;
+  return `${getNodeName(node)} (${node.x}, ${node.y})`;
 }
 
 /**
@@ -565,7 +564,11 @@ function getNodeDisplayName(node) {
  * @returns {string} the name of the node
  */
 function getNodeName(node) {
-  return `${node.bid}-${node.type}-${node.id}`;
+  let name = '';
+  if (node.bid) {
+    name += `B${node.bid}-`;
+  }
+  return `${name}${nodeTypeIdentifiers[node.type]}${node.name}`;
 }
 
 /**
@@ -667,11 +670,11 @@ function updateNodeType() {
  */
 function setCurrentMenu(menu) {
   currentMenu = menu;
-  for (let i = 0; i < menus.length; i++) {
-    if (i === currentMenu) {
-      $(menus[i]).removeClass("hidden-prop");
+  for (const menu of menus) {
+    if (menu === menus[currentMenu]) {
+      $(menu).removeClass("hidden-prop");
     } else {
-      $(menus[i]).addClass("hidden-prop");
+      $(menu).addClass("hidden-prop");
     }
   }
 
@@ -693,17 +696,17 @@ function populateMenu(menu) {
         nodeTypeCount.push({ floor: 0, total: 0 });
       }
 
-      for (let i = 0; i < floors.length; i++) {
-        const nodes = floors[i].nodes;
-        for (let j = 0; j < nodes.length; j++) {
-          nodeTypeCount[nodes[j].type].total += 1;
-          if (i === currentFloor) {
-            nodeTypeCount[nodes[j].type].floor += 1;
+      for (const floor of floors) {
+        for (const node of floor.nodes) {
+          nodeTypeCount[node.type].total += 1;
+          if (floor === floors[currentFloor]) {
+            nodeTypeCount[node.type].floor += 1;
           }
+
         }
-        edgeCount.total += floors[i].edges.length;
-        if (i === currentFloor) {
-          edgeCount.floor = floors[i].edges.length;
+        edgeCount.total += floor.edges.length;
+        if (floor === floors[currentFloor]) {
+          edgeCount.floor = floor.edges.length;
         }
       }
 
@@ -734,7 +737,8 @@ function populateMenu(menu) {
       if (node != null) {
         updateNodeType();
         $('#node-bid').val(node.bid);
-        $('#node-id').val(node.id);
+        $('#node-name').val(node.name);
+        $('#node-additional').val(node.additional);
         $('#node-x').val(Math.round(node.x));
         $('#node-y').val(Math.round(node.y));
       }
@@ -744,10 +748,13 @@ function populateMenu(menu) {
       if (edge != null) {
         $('#edge-node-a').val(getNodeDisplayName(edge.nodeA));
         $('#edge-node-b').val(getNodeDisplayName(edge.nodeB));
-        $('#a-to-b').val(edge.aToB);
-        $('#b-to-a').val(edge.bToA);
-        $('#edge-accessible').val(edge.accessible);
+        $('#edge-accessible').prop('checked', edge.accessible);
         $('#edge-closed').prop('checked', edge.closed);
+        $('#edge-a-to-b').prop('checked', edge.aToB);
+        $('#edge-b-to-a').prop('checked', edge.bToA);
+        $('#edge-lr').removeClass('selected-icon');
+        $('#edge-ud').removeClass('selected-icon');
+        $(`#edge-${edge.direction.toLowerCase()}`).addClass('selected-icon')
       }
       break;
   }
@@ -866,8 +873,8 @@ function handleCanvasMouseUp(event) {
         }
 
         // Check to make sure the edge is unique
-        for (let i = 0; i < floor.edges.length; i++) {
-          if (edgeContainsNode(floor.edges[i], startNode) && edgeContainsNode(floor.edges[i], endNode)) {
+        for (const edge of floor.edges) {
+          if (edgeContainsNode(edge, startNode) && edgeContainsNode(edge, endNode)) {
             redraw();
             return;
           }
@@ -967,16 +974,17 @@ function redraw() {
 
   // Draw edges
   canvasCtx.lineWidth = 2;
-  for (let i = 0; i < floor.edges.length; i++) {
-    const edge = floor.edges[i];
+  for (const edge of floor.edges) {
     if (edge === selectedEdge) {
       continue;
     }
 
-    if (edge.aToB.length === 0 || edge.bToA.length === 0) {
+    if (edge.direction === 'LR') {
       canvasCtx.strokeStyle = 'black';
-    } else {
+    } else if (edge.direction === 'UD') {
       canvasCtx.strokeStyle = '#8F001A';
+    } else {
+      throw new Error(`Invalid edge direction. Not 'LR' or 'UD': ${edge.direction}`);
     }
 
     canvasCtx.beginPath();
@@ -986,10 +994,9 @@ function redraw() {
   }
 
   // Draw nodes
-  for (let i = 0; i < floor.nodes.length; i++) {
-    const node = floor.nodes[i];
+  for (const node of floor.nodes) {
     canvasCtx.strokeStyle = getNodeTypeStrokeStyle(node.type);
-    canvasCtx.fillStyle = node.type === NODE_TYPE_ROOM && node.id === '' ? 'black' : getNodeTypeFillStyle(node.type);
+    canvasCtx.fillStyle = node.type === NODE_TYPE_ROOM && node.name === '' ? 'black' : getNodeTypeFillStyle(node.type);
     canvasCtx.beginPath();
     canvasCtx.ellipse(convertToDrawingScale(node.x, panOffsetX), convertToDrawingScale(node.y, panOffsetY), nodeSize, nodeSize, 0, 0, 2 * Math.PI);
     canvasCtx.stroke();
@@ -1062,6 +1069,23 @@ function handleResize() {
  * GRAPH GENERATOR
  ************************************************/
 
+ /**
+ * Find a node with a certain name, or return null.
+ *
+ * @param {array}  nodes list of nodes
+ * @param {string} name  name to find
+ * @returns {Node} the found node, or null
+ */
+ function findNodeByName(nodes, name) {
+   for (const node of nodes) {
+     if (node.name === name) {
+       return node;
+     }
+   }
+
+   return null;
+ }
+
 /**
  * Parses a JSON object and set the project properties.
  */
@@ -1075,15 +1099,19 @@ function parseProject(json) {
       floors.pop();
     }
 
-    for (let i = 0; i < json.floors.length; i++) {
-      floors.push(json.floors[i]);
+    for (const floor of json.floors) {
+      for (const edge of floor.edges) {
+        edge.nodeA = findNodeByName(floor.nodes, edge.nodeA);
+        edge.nodeB = findNodeByName(floor.nodes, edge.nodeB);
+      }
+      floors.push(floor);
     }
   }
 
   if (typeof (json.nodeTypeColors) === 'object') {
     nodeTypeColors.length = 0;
-    for (let i = 0; i < json.nodeTypeColors.length; i++) {
-      nodeTypeColors.push(json.nodeTypeColors[i]);
+    for (const color of json.nodeTypeColors) {
+      nodeTypeColors.push(color);
     }
   }
 
@@ -1107,12 +1135,18 @@ function parseProject(json) {
  * to a string and returns it.
  */
 function projectToString() {
-  project = {};
-  project.projectName = projectName;
-  project.floors = JSON.parse(JSON.stringify(floors));
-  for (let i = 0; i < project.floors.length; i++) {
-    project.floors[i].img = null;
+  assignAllNodeNames();
+  project = { floors, projectName };
+
+  project.floors = JSON.parse(JSON.stringify(project.floors));
+  for (const floor of project.floors) {
+    floor.img = null;
+    for (const edge of floor.edges) {
+      edge.nodeA = edge.nodeA.name;
+      edge.nodeB = edge.nodeB.name;
+    }
   }
+
   project.nodeTypeColors = nodeTypeColors;
   project.nodeSize = nodeSize;
   return JSON.stringify(project, null, 2);
@@ -1155,27 +1189,70 @@ function loadProject(e) {
  *
  * @param {object} node         the node to potentially assign a name to
  * @param {array}  nodeIdCounts number of each node type created
+ * @param {object} takenNames
  */
-function assignNodeName(node, nodeIdCounts) {
-  if (node.id === '') {
-    node.id = nodeIdCounts[node.type].toString();
-    nodeIdCounts[node.type]++;
+function assignNodeName(node, nodeIdCounts, takenNames) {
+  if (node.name === '') {
+    let potentialName = '';
+    do {
+      potentialName = nodeIdCounts[node.type].toString();
+      nodeIdCounts[node.type]++;
+    } while (takenNames[potentialName] === true);
+
+    node.name = potentialName
+    node.assignedName = true;
+    takenNames[node.name] = true;
+  }
+}
+
+/**
+ * Assign sequential names to nodes which are missing names.
+ */
+function assignAllNodeNames() {
+  // Get existing names of nodes
+  const takenNames = {};
+  for (const floor of floors) {
+    for (const node of floor.nodes) {
+      if (node.name !== '') {
+        takenNames[node.name] = true;
+      }
+    }
+  }
+
+  // Assign names to nodes without names
+  const nodeNameCounts = [0, 0, 0, 0, 0];
+  for (const floor of floors) {
+    for (const node of floor.nodes) {
+      assignNodeName(node, nodeNameCounts, takenNames);
+    }
+  }
+}
+
+/**
+ * Remove assigned names on nodes on all floors.
+ */
+function clearGeneratedNodeNames() {
+  for (const floor of floors) {
+    for (const node of floor.nodes) {
+      if (node.assignedName === true) {
+        node.name = '';
+        node.assignedName = false;
+      }
+    }
   }
 }
 
 /**
  * Generates a file containing data of all the edges in the graph.
  */
-function generateGraphFile() {
-  const nodeIdCounts = [0, 0, 0, 0, 0];
+function generateEdgeFile() {
+  assignAllNodeNames();
+
+  const adjacencies = {};
 
   const edges = [];
-  for (let floorIdx = 0; floorIdx < floors.length; floorIdx++) {
-    const floor = floors[floorIdx];
-    for (let edgeIdx = 0; edgeIdx < floor.edges.length; edgeIdx++) {
-      const edge = floor.edges[edgeIdx];
-      assignNodeName(edge.nodeA, nodeIdCounts);
-      assignNodeName(edge.nodeB, nodeIdCounts);
+  for (const floor of floors) {
+    for (const edge of floor.edges) {
       fixEdgeNodeAssignments(edge);
       edges.push(edge);
     }
@@ -1190,29 +1267,81 @@ function generateGraphFile() {
     }
   });
 
-  let file = ''
-  for (let i = 0; i < edges.length; i++) {
-    const nameA = getNodeName(edges[i].nodeA);
-    const nameB = getNodeName(edges[i].nodeB);
-    const aToB = edges[i].aToB;
-    const bToA = edges[i].bToA;
-    const distance = getDistanceBetweenNodes(edges[i].nodeA, edges[i].nodeB);
-    const accessible = edges[i].accessible ? 'T' : 'F';
-    file += `${nameA}|${nameB}|${distance.toFixed(2)}|${accessible}|${aToB}|${bToA}|\n`;
+  for (const edge of edges) {
+    const relevantCoord = edge.direction === 'LR' ? 'x' : 'y';
+    const aToBDirection = edge.nodeA[relevantCoord] < edge.nodeB[relevantCoord]
+        ? edge.direction.charAt(0)
+        : edge.direction.charAt(1);
+    const bToADirection = aToBDirection === edge.direction.charAt(0)
+        ? edge.direction.charAt(1)
+        : edge.direction.charAt(0);
+
+    const nameA = getNodeName(edge.nodeA);
+    const nameB = getNodeName(edge.nodeB);
+    const distance = getDistanceBetweenNodes(edge.nodeA, edge.nodeB);
+    const accessible = edge.accessible ? 'T' : 'F';
+
+    if (edge.aToB) {
+      if (!(nameA in adjacencies)) {
+        adjacencies[nameA] = [];
+      }
+      adjacencies[nameA].push(`${nameB}:${aToBDirection}:${distance.toFixed(2)}:${accessible}`);
+    }
+    if (edge.bToA) {
+      if (!(nameB in adjacencies)) {
+        adjacencies[nameB] = [];
+      }
+      adjacencies[nameB].push(`${nameA}:${bToADirection}:${distance.toFixed(2)}:${accessible}`);
+    }
   }
 
-  download(`${projectName}.txt`, file);
+  let file = ''
+  for (const node of adjacencies) {
+    if (adjacencies.hasOwnProperty(node)) {
+      if (node.startsWith('B')) {
+        // Don't include nodes from other buildings in this building's file
+        continue;
+      }
+
+      file += `${node}|${adjacencies[node].join()}\n`;
+    }
+  }
+
+  download(`${projectName}_edges.txt`, file);
+}
+
+function generateNodeFile() {
+  assignAllNodeNames();
+
+  let nodes = {};
+  for (const floor of floors) {
+    for (const node of floor.nodes){
+      switch (node.type) {
+        case NODE_TYPE_ELEVATOR:
+          nodes[getNodeName(node)] = node.additional.split(',');
+          break;
+        case NODE_TYPE_DOOR:
+        case NODE_TYPE_STAIRS:
+        case NODE_TYPE_HALL:
+        case NODE_TYPE_ROOM:
+          break;
+      }
+    }
+  }
+
+  const file = JSON.stringify(nodes, null, 2);
+  download(`${projectName}_nodes.json`, file);
 }
 
 /**
  * Generates a file containing all of the excluded edges in the graph.
  */
 function generateExcludedNodesFile() {
+  assignAllNodeNames();
   const edges = [];
-  for (let floorIdx = 0; floorIdx < floors.length; floorIdx++) {
-    const floor = floors[floorIdx];
-    for (let edgeIdx = 0; edgeIdx < floor.edges.length; edgeIdx++) {
-      const edge = floor.edges[edgeIdx];
+  for (const floor of floors) {
+    for (const edge of floor.edges) {
+      fixEdgeNodeAssignments(edge);
       if (edge.closed) {
         edges.push(edge);
       }
@@ -1229,8 +1358,8 @@ function generateExcludedNodesFile() {
   });
 
   let file = ''
-  for (let i = 0; i < edges.length; i++) {
-    file += `${getNodeName(edges[i].nodeA)} ${getNodeName(edges[i].nodeB)}\n`;
+  for (const edge of edges) {
+    file += `${getNodeName(edge.nodeA)} ${getNodeName(edge.nodeB)}\n`;
   }
 
   download(`${projectName}_excluded.txt`, file);
@@ -1356,18 +1485,14 @@ $(document).ready(function() {
   $('#base-floors').on('click', '.floor-change', handleFloorChange);
 
   // Changing edge properties
-  $('#a-to-b').on('input', (event) => {
-    const edge = selectedEdge;
-    if (edge != null) {
-      edge.aToB = event.target.value;
-    }
-  })
-  $('#b-to-a').on('input', (event) => {
-    const edge = selectedEdge;
-    if (edge != null) {
-      edge.bToA = event.target.value;
-    }
-  })
+  $('.edge-direction').click(function() {
+    const id = $(this).attr('id');
+    const direction = id.substr(id.lastIndexOf('-') + 1);
+    selectedEdge.direction = direction.toUpperCase();
+    $('#edge-lr').removeClass('selected-icon');
+    $('#edge-ud').removeClass('selected-icon');
+    $(`#edge-${direction}`).addClass('selected-icon')
+  });
   $('#edge-accessible').change(function() {
     const edge = selectedEdge;
     if (edge != null) {
@@ -1378,6 +1503,18 @@ $(document).ready(function() {
     const edge = selectedEdge;
     if (edge != null) {
       edge.closed = this.checked;
+    }
+  });
+  $('#edge-a-to-b').change(function() {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.aToB = this.checked;
+    }
+  });
+  $('#edge-b-to-a').change(function() {
+    const edge = selectedEdge;
+    if (edge != null) {
+      edge.bToA = this.checked;
     }
   });
 
@@ -1434,10 +1571,17 @@ $(document).ready(function() {
       updateNodeList();
     }
   });
-  $('#node-id').on('input', (event) => {
+  $('#node-name').on('input', (event) => {
     const node = selectedNode;
     if (node != null) {
-      node.id = event.target.value;
+      node.name = event.target.value;
+      updateNodeList();
+    }
+  });
+  $('#node-additional').on('input', (event) => {
+    const node = selectedNode;
+    if (node != null) {
+      node.additional = event.target.value;
       updateNodeList();
     }
   });
@@ -1451,7 +1595,9 @@ $(document).ready(function() {
   // Import/export
   $('#save').click(saveProject);
   $('#generate-excluded').click(generateExcludedNodesFile);
-  $('#generate-graph').click(generateGraphFile);
+  $('#generate-edges').click(generateEdgeFile);
+  $('#generate-nodes').click(generateNodeFile);
+  $('#clear-generated-names').click(clearGeneratedNodeNames);
 });
 
 // Bind resize function

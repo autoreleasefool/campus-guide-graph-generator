@@ -53,7 +53,7 @@ html, body {
   padding: 6px;
 }
 
-.tool, .node-type {
+.tool, .node-type, .edge-direction {
   cursor: pointer;
   border: 1px transparent solid;
 }
@@ -173,6 +173,10 @@ li.prop-list-item p {
 
 .prop-icon-list {
   justify-content: space-between;
+}
+
+.prop-icon-list-compact {
+  justify-content: left;
 }
 
 .icon-list-item {
@@ -303,9 +307,14 @@ input#node-b[type=range]::-webkit-slider-runnable-track {
   background-color: #ACA39A;
 }
 
-#generate-graph {
+#generate-edges {
   color: white;
   background-color: #80746C;
+}
+
+#generate-nodes {
+  color: white;
+  background-color: #2D2D2C;
 }
 
 #generate-excluded {

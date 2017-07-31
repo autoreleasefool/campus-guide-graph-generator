@@ -48,8 +48,16 @@
           <p>Save</p>
         </div>
 
-        <div class="button" id="generate-graph">
-          <p>Generate graph</p>
+        <div class="button" id="clear-generated-names">
+          <p>Clear generated names</p>
+        </div>
+
+        <div class="button" id="generate-edges">
+          <p>Generate edges</p>
+        </div>
+
+        <div class="button" id="generate-nodes">
+          <p>Generate nodes</p>
         </div>
 
         <div class="button" id="generate-excluded">
@@ -146,8 +154,11 @@
           <i id="node-type-4" class="material-icons md-light md-24 icon-list-item node-type">room</i>
         </div>
 
-        <label for="node-id">Name (optional)</label>
-        <input type="text" id="node-id" name="node-id" placeholder="02" />
+        <label for="node-name">Name (optional)</label>
+        <input type="text" id="node-name" name="node-name" placeholder="02" />
+
+        <label for="node-additional">Additional info (optional)</label>
+        <input type="text" id="node-additional" name="node-additional" placeholder="02" />
 
         <hr />
 
@@ -192,18 +203,17 @@
       <div id="edge-props" class="prop padded">
 
         <label for="edge-node-a">Node A</label>
-        <input disabled type="text" id="edge-node-a" name="edge-node-a" placeholder="0:s:0" />
+        <input disabled type="text" id="edge-node-a" name="edge-node-a" placeholder="R1" />
 
         <label for="edge-node-b">Node B</label>
-        <input disabled type="text" id="edge-node-b" name="edge-node-b" placeholder="0:s:0" />
+        <input disabled type="text" id="edge-node-b" name="edge-node-b" placeholder="H1" />
 
         <hr />
 
-        <label for="a-to-b">A to B (optional)</label>
-        <textarea id="a-to-b" rows="5" name="a-to-b" placeholder="Turn right and..."></textarea>
-
-        <label for="b-to-a">B to A (optional)</label>
-        <textarea id="b-to-a" rows="5" name="b-to-a" placeholder="Turn left and..."></textarea>
+        <div class="prop-horiz prop-icon-list-compact">
+          <i id="edge-lr" class="material-icons md-light md-24 icon-list-item edge-direction">swap_horiz</i>
+          <i id="edge-ud" class="material-icons md-light md-24 icon-list-item edge-direction">swap_vert</i>
+        </div>
 
         <div class="prop-horiz spaced">
           <label for="edge-accessible" class="prop-edge-val">Accessible?</label>
@@ -213,6 +223,16 @@
         <div class="prop-horiz spaced">
           <label for="edge-closed" class="prop-edge-val">Closed?</label>
           <input type="checkbox" id="edge-closed" name="edge-closed" />
+        </div>
+
+        <div class="prop-horiz spaced">
+          <label for="edge-a-to-b" class="prop-edge-val">A to B?</label>
+          <input type="checkbox" id="edge-a-to-b" name="edge-a-to-b" />
+        </div>
+
+        <div class="prop-horiz spaced">
+          <label for="edge-b-to-a" class="prop-edge-val">B to A?</label>
+          <input type="checkbox" id="edge-b-to-a" name="edge-b-to-a" />
         </div>
 
       </div>
