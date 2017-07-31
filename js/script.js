@@ -1123,6 +1123,7 @@ function parseProject(json) {
     projectName = json.projectName;
   }
 
+  clearGeneratedNodeNames();
   currentFloor = 0;
   currentTool = TOOL_PAN;
   highlightCurrentTool();
