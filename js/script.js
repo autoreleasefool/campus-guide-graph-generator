@@ -1178,11 +1178,11 @@ function loadProject(e) {
     parseProject(json);
   }
 
-  if (/text|javascript/ig.test(e.target.files[0].type)) {
-    reader.readAsText(e.target.files[0]);
-  } else {
-    alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
-  }
+  reader.readAsText(e.target.files[0]);
+  // if (/text|javascript/ig.test(e.target.files[0].type)) {
+  // } else {
+  //   alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
+  // }
 }
 
 /**
@@ -1297,7 +1297,7 @@ function generateEdgeFile() {
   }
 
   let file = ''
-  for (const node of adjacencies) {
+  for (const node in adjacencies) {
     if (adjacencies.hasOwnProperty(node)) {
       if (node.startsWith('B')) {
         // Don't include nodes from other buildings in this building's file
@@ -1330,8 +1330,14 @@ function generateNodeFile() {
     }
   }
 
-  const file = JSON.stringify(nodes, null, 2);
-  download(`${projectName}_nodes.json`, file);
+  let file = '';
+  for (const node in nodes) {
+    if (nodes.hasOwnProperty(node)) {
+      file += `${node}|${nodes[node]}\n`;
+    }
+  }
+
+  download(`${projectName}_nodes.txt`, file);
 }
 
 /**
@@ -1360,7 +1366,7 @@ function generateExcludedNodesFile() {
 
   let file = ''
   for (const edge of edges) {
-    file += `${getNodeName(edge.nodeA)} ${getNodeName(edge.nodeB)}\n`;
+    file += `${getNodeName(edge.nodeA)}|${getNodeName(edge.nodeB)}\n`;
   }
 
   download(`${projectName}_excluded.txt`, file);
