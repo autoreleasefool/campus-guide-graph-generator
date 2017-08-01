@@ -1245,8 +1245,10 @@ function clearGeneratedNodeNames() {
 
 /**
  * Generates a file containing data of all the edges in the graph.
+ *
+ * @param {boolean} shouldDownload false to disable downloading of file
  */
-function generateEdgeFile() {
+function generateEdgeFile(shouldDownload = true) {
   assignAllNodeNames();
 
   const adjacencies = {};
@@ -1308,10 +1310,19 @@ function generateEdgeFile() {
     }
   }
 
-  download(`${projectName}_edges.txt`, file);
+  if (shouldDownload) {
+    download(`${projectName}_edges.txt`, file);
+  }
+
+  return file;
 }
 
-function generateNodeFile() {
+/**
+ * Generates a file containing all of the nodes details.
+ *
+ * @param {boolean} shouldDownload false to disable downloading of file
+ */
+function generateNodeFile(shouldDownload = true) {
   assignAllNodeNames();
 
   let nodes = {};
@@ -1337,13 +1348,19 @@ function generateNodeFile() {
     }
   }
 
-  download(`${projectName}_nodes.txt`, file);
+  if (shouldDownload) {
+    download(`${projectName}_nodes.txt`, file);
+  }
+
+  return file;
 }
 
 /**
  * Generates a file containing all of the excluded edges in the graph.
+ *
+ * @param {boolean} shouldDownload false to disable downloading of file
  */
-function generateExcludedNodesFile() {
+function generateExcludedNodesFile(shouldDownload = true) {
   assignAllNodeNames();
   const edges = [];
   for (const floor of floors) {
@@ -1369,7 +1386,24 @@ function generateExcludedNodesFile() {
     file += `${getNodeName(edge.nodeA)}|${getNodeName(edge.nodeB)}\n`;
   }
 
-  download(`${projectName}_excluded.txt`, file);
+  if (shouldDownload) {
+    download(`${projectName}_excluded.txt`, file);
+  }
+
+  return file;
+}
+
+/**
+ * Generates all graph details and download.
+ */
+function generateAllFiles() {
+  let file = '[EDGES]\n';
+  file += generateEdgeFile(false);
+  file += '[NODES]\n';
+  file += generateNodeFile(false);
+  file += '[EXCLUDED]\n';
+  file += generateExcludedNodesFile(false);
+  download(`${projectName}_graph.txt`, file);
 }
 
 /************************************************
@@ -1605,6 +1639,7 @@ $(document).ready(function() {
   $('#generate-edges').click(generateEdgeFile);
   $('#generate-nodes').click(generateNodeFile);
   $('#clear-generated-names').click(clearGeneratedNodeNames);
+  $('#generate-all').click(generateAllFiles);
 });
 
 // Bind resize function

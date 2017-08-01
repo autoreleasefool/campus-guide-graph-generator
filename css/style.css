@@ -297,7 +297,7 @@ input#node-b[type=range]::-webkit-slider-runnable-track {
   margin: 0;
 }
 
-#load, #generate-edges {
+#load, #generate-edges, #generate-all {
   color: black;
   background-color: #F2F2F2;
 }
