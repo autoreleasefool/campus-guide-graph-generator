@@ -111,7 +111,10 @@ let newEdgeY = -1;
  ************************************************/
 
 // Name of the project
-let projectName = ''
+let projectName = '';
+
+// Additional details about the formatting
+let projectFormat = '';
 
 // For drawing the user generated content
 let canvas;
@@ -1123,6 +1126,10 @@ function parseProject(json) {
     projectName = json.projectName;
   }
 
+  if (typeof (json.projectFormat) === 'string') {
+    projectFormat = json.projectFormat;
+  }
+
   clearGeneratedNodeNames();
   currentFloor = 0;
   currentTool = TOOL_PAN;
@@ -1137,7 +1144,7 @@ function parseProject(json) {
  */
 function projectToString() {
   assignAllNodeNames();
-  project = { floors, projectName };
+  project = { floors, projectName, projectFormat };
 
   project.floors = JSON.parse(JSON.stringify(project.floors));
   for (const floor of project.floors) {
@@ -1397,7 +1404,10 @@ function generateExcludedNodesFile(shouldDownload = true) {
  * Generates all graph details and download.
  */
 function generateAllFiles() {
-  let file = '[EDGES]\n';
+  let file = '';
+  file += '[FORMAT]\n';
+  file += `${projectFormat}\n`;
+  file += '[EDGES]\n';
   file += generateEdgeFile(false);
   file += '[NODES]\n';
   file += generateNodeFile(false);
@@ -1520,6 +1530,10 @@ $(document).ready(function() {
 
   $('#base-name').on('input', (event) => {
     projectName = event.target.value;
+  });
+
+  $('#base-format').on('input', (event) => {
+    projectFormat = event.target.value;
   });
 
   // Altering floors
