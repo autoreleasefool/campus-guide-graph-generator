@@ -43,9 +43,9 @@ const NODE_TYPE_ROOM = 4;
 // Nodes which represent streets
 const NODE_TYPE_STREET = 5;
 // Nodes which represent paths
-const NODE_TYPE_PATH = 5;
+const NODE_TYPE_PATH = 6;
 // Nodes which represent street intersections
-const NODE_TYPE_INTERSECTION = 5;
+const NODE_TYPE_INTERSECTION = 7;
 
 // Static canvas width for drawing images
 const BASE_CANVAS_WIDTH = 800;
