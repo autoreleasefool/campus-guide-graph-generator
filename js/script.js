@@ -354,6 +354,174 @@ function findNearestEdge(x, y, floor) {
 }
 
 /**
+ * Returns true if door nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canDoorsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_HALL:
+    case NODE_TYPE_PATH:
+    case NODE_TYPE_STREET:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if stair nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canStairsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_HALL:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if elevator nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canElevatorsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_HALL:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if hallway nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canHallsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_DOOR:
+    case NODE_TYPE_STAIRS:
+    case NODE_TYPE_ELEVATOR:
+    case NODE_TYPE_HALL:
+    case NODE_TYPE_ROOM:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if room nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canRoomsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_HALL:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if street nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canStreetsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_DOOR:
+    case NODE_TYPE_STREET:
+    case NODE_TYPE_PATH:
+    case NODE_TYPE_INTERSECTION:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if path nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canPathsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_DOOR:
+    case NODE_TYPE_STREET:
+    case NODE_TYPE_PATH:
+    case NODE_TYPE_INTERSECTION:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Returns true if intersection nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canIntersectionsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_STREET:
+    case NODE_TYPE_PATH:
+    case NODE_TYPE_INTERSECTION:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
+ * Checks if two node types can be connected by an edge.
+ *
+ * @param {number} typeA type of first node
+ * @param {number} typeB type of second node
+ * @returns {boolean} true if the nodes can connect, false otherwise
+ */
+function canNodeTypesConnect(typeA, typeB) {
+  switch (typeA) {
+    case NODE_TYPE_DOOR:
+      return canDoorsConnectTo(typeB);
+    case NODE_TYPE_STAIRS:
+      return canStairsConnectTo(typeB);
+    case NODE_TYPE_ELEVATOR:
+      return canElevatorsConnectTo(typeB);
+    case NODE_TYPE_HALL:
+      return canHallsConnectTo(typeB);
+    case NODE_TYPE_ROOM:
+      return canRoomsConnectTo(typeB);
+    case NODE_TYPE_STREET:
+      return canStreetsConnectTo(typeB);
+    case NODE_TYPE_PATH:
+      return canPathsConnectTo(typeB);
+    case NODE_TYPE_INTERSECTION:
+      return canIntersectionsConnectTo(typeB);
+  }
+
+  throw new Error(`Invalid node type: ${type}`);
+}
+
+/**
+ * Returns name of the node type.
+ *
+ * @param {number} type node type
+ */
+function getNodeTypeName(type) {
+  switch (typeA) {
+    case NODE_TYPE_DOOR:
+      return 'Door';
+    case NODE_TYPE_STAIRS:
+      return 'Stairs';
+    case NODE_TYPE_ELEVATOR:
+      return 'Elevator';
+    case NODE_TYPE_HALL:
+      return 'Hallway';
+    case NODE_TYPE_ROOM:
+      return 'Room';
+    case NODE_TYPE_STREET:
+      return 'Street';
+    case NODE_TYPE_PATH:
+      return 'Path';
+    case NODE_TYPE_INTERSECTION:
+      return 'Intersection';
+  }
+
+  throw new Error(`Invalid node type: ${type}`);
+}
+
+/**
  * Adds a new edge to the floor
  *
  * @param {object} nodeA starting node of the edge
@@ -361,6 +529,11 @@ function findNearestEdge(x, y, floor) {
  * @param {number} floor the floor the edge is on
  */
 function addNewEdge(nodeA, nodeB, floor) {
+  if (!(canNodeTypesConnect(nodeA.type, nodeB.type) && canNodeTypesConnect(nodeB.type, nodeA.type))) {
+    alert(`${getNodeTypeName(nodeA.type)} and ${getNodeTypeName(nodeB.type)} cannot be connected.`);
+    return;
+  }
+
   const newEdge = {
     nodeA,
     nodeB,
@@ -1115,6 +1288,9 @@ function parseProject(json) {
       for (const edge of floor.edges) {
         edge.nodeA = findNodeByName(floor.nodes, edge.nodeA);
         edge.nodeB = findNodeByName(floor.nodes, edge.nodeB);
+        if (!(canNodeTypesConnect(edge.nodeA.type, edge.nodeB.type) && canNodeTypesConnect(edge.nodeB.type, edge.nodeA.type))) {
+          throw new Error(`Invalid project provided! ${getNodeTypeName(edge.nodeA.type)} cannot connect to ${getNodeTypeName(edge.nodeB.type)}`)
+        }
       }
       floors.push(floor);
     }
@@ -1161,6 +1337,9 @@ function projectToString() {
     for (const edge of floor.edges) {
       edge.nodeA = edge.nodeA.name;
       edge.nodeB = edge.nodeB.name;
+      if (!(canNodeTypesConnect(edge.nodeA.type, edge.nodeB.type) && canNodeTypesConnect(edge.nodeB.type, edge.nodeA.type))) {
+        alert(`Invalid project generated! ${getNodeTypeName(edge.nodeA.type)} cannot connect to ${getNodeTypeName(edge.nodeB.type)}`)
+      }
     }
   }
 
@@ -1273,6 +1452,9 @@ function generateEdgeFile(shouldDownload = true) {
   for (const floor of floors) {
     for (const edge of floor.edges) {
       fixEdgeNodeAssignments(edge);
+      if (!(canNodeTypesConnect(edge.nodeA.type, edge.nodeB.type) && canNodeTypesConnect(edge.nodeB.type, edge.nodeA.type))) {
+        alert(`Invalid project generated! ${getNodeTypeName(edge.nodeA.type)} cannot connect to ${getNodeTypeName(edge.nodeB.type)}`)
+      }
       edges.push(edge);
     }
   }
