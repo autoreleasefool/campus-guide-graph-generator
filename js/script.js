@@ -40,6 +40,12 @@ const NODE_TYPE_ELEVATOR = 2;
 const NODE_TYPE_HALL = 3;
 // Nodes which represent rooms
 const NODE_TYPE_ROOM = 4;
+// Nodes which represent streets
+const NODE_TYPE_STREET = 5;
+// Nodes which represent paths
+const NODE_TYPE_PATH = 5;
+// Nodes which represent street intersections
+const NODE_TYPE_INTERSECTION = 5;
 
 // Static canvas width for drawing images
 const BASE_CANVAS_WIDTH = 800;
@@ -84,10 +90,13 @@ const nodeTypeColors = [
   { r: 255, g: 255, b: 0 },
   { r: 0, g: 0, b: 255 },
   { r: 0, g: 0, b: 0 },
+  { r: 0, g: 255, b: 255 },
+  { r: 255, g: 0, b: 255 },
+  { r: 128, g: 128, b: 128 },
 ];
 // Identify node types by a single character
 const nodeTypeIdentifiers = [
-  'D', 'S', 'E', 'H', 'R',
+  'D', 'S', 'E', 'H', 'R', 'T', 'P', 'I',
 ];
 // Radius of nodes
 let nodeSize = DEFAULT_NODE_SIZE;
@@ -1336,13 +1345,11 @@ function generateNodeFile(shouldDownload = true) {
   for (const floor of floors) {
     for (const node of floor.nodes){
       switch (node.type) {
-        case NODE_TYPE_ELEVATOR:
-          nodes[getNodeName(node)] = node.additional.split(',');
+        case NODE_TYPE_INTERSECTION:
+        case NODE_TYPE_STREET:
+          nodes[getNodeName(node)] = node.additional;
           break;
-        case NODE_TYPE_DOOR:
-        case NODE_TYPE_STAIRS:
-        case NODE_TYPE_HALL:
-        case NODE_TYPE_ROOM:
+        default:
           break;
       }
     }
