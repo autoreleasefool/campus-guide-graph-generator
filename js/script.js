@@ -320,14 +320,32 @@ function attemptToConnectToNearestNode(node, floor) {
  * @param {number} x     x location of node to remove
  * @param {number} y     y location of node to remove
  * @param {number} floor floor to remove node from
+ * @returns {boolean} true if a node was removed, false otherwise
  */
 function removeNodeAt(x, y, floor) {
   const nodes = floors[floor].nodes;
-  for (let i = 0; i < nodes.length; i++) {
-    if (Math.abs(nodes[i].x - x) <= nodeSize / scale && Math.abs(nodes[i].y - y) <= nodeSize / scale) {
-      removeNode(nodes, i, floor);
-      return;
-    }
+  const nearest = findNearestNode(x, y, floor);
+  if (nearest != null) {
+    removeNode(floors[floor].nodes, nearest.i, floor);
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Attempts to remove an edge from the graph, if there is one at the location.
+ *
+ * @param {number} x     x location of edge to remove
+ * @param {number} y     y location of edge to remove
+ * @param {number} floor floor to remove edge from
+ * @returns {boolean} true if an edge was removed, false otherwise
+ */
+function removeEdgeAt(x, y, floor) {
+  const edges = floors[floor].edges;
+  const nearest = findNearestEdge(x, y, floor);
+  if (nearest != null) {
+    edges.splice(nearest.i, 1);
   }
 }
 
@@ -1040,7 +1058,7 @@ function handleCanvasClick(event) {
       redraw();
       break;
     case TOOL_REMOVE:
-      removeNodeAt(eventX, eventY, currentFloor);
+      removeNodeAt(eventX, eventY, currentFloor) || removeEdgeAt(eventX, eventY, currentFloor);
       resetToBaseMenu();
       redraw();
       break;
@@ -1314,7 +1332,7 @@ function handleResize() {
  */
  function findNodeByName(nodes, name) {
    for (const node of nodes) {
-     if (node.name === name) {
+     if (getNodeName(node) === name) {
        return node;
      }
    }
@@ -1389,8 +1407,8 @@ function projectToString() {
       if (!(canNodeTypesConnect(edge.nodeA.type, edge.nodeB.type) && canNodeTypesConnect(edge.nodeB.type, edge.nodeA.type))) {
         alert(`Invalid project generated! ${getNodeTypeName(edge.nodeA.type)} cannot connect to ${getNodeTypeName(edge.nodeB.type)}`)
       }
-      edge.nodeA = edge.nodeA.name;
-      edge.nodeB = edge.nodeB.name;
+      edge.nodeA = getNodeName(edge.nodeA);
+      edge.nodeB = getNodeName(edge.nodeB);
     }
   }
 
