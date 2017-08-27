@@ -171,19 +171,25 @@ function handleKeyPress(event) {
   switch (event.target.tagName.toLowerCase()) {
     case "input":
     case "textarea":
-      // Ignore keypresses when a text input is focused
+      if (event.keyCode == 27) { // ESCAPE
+        const focused = document.activeElement;
+        focused.blur();
+      }
       break;
     default:
       // Hotkeys to switch tools
       const oldTool = currentTool;
       switch (event.keyCode) {
-        case 83: case 84: currentTool = TOOL_SELECT; break;
-        case 80: case 32: currentTool = TOOL_PAN; break;
-        case 78: currentTool = TOOL_ADD; break;
-        case 82: currentTool = TOOL_REMOVE; break;
-        case 76: currentTool = TOOL_EDGE; break;
-        case 187: currentTool = TOOL_ZOOM_IN; break;
-        case 189: currentTool = TOOL_ZOOM_OUT; break;
+        case 83: case 84: currentTool = TOOL_SELECT; break; // S, T
+        case 80: case 32: currentTool = TOOL_PAN; break;    // P, SPACE
+        case 78: currentTool = TOOL_ADD; break;             // N
+        case 82: currentTool = TOOL_REMOVE; break;          // R
+        case 76: currentTool = TOOL_EDGE; break;            // L
+        case 73: currentTool = TOOL_ZOOM_IN; break;         // I
+        case 79: currentTool = TOOL_ZOOM_OUT; break;        // O
+        case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56:
+          mostRecentNodeType = event.keyCode - 49;
+          break;
       }
       if (oldTool !== currentTool) {
         highlightCurrentTool();
@@ -272,8 +278,6 @@ function addNewNode(x, y, floor, type) {
  * @param {number} floor
  */
 function attemptToConnectToNearestNode(node, floor) {
-  console.log(`Node type: ${node.type}`)
-
   switch (node.type) {
     case NODE_TYPE_DOOR:
     case NODE_TYPE_ELEVATOR:
@@ -290,8 +294,6 @@ function attemptToConnectToNearestNode(node, floor) {
           }
         }
       }
-
-      console.log(`Nearest node: ${JSON.stringify(minNode)}`)
 
       if (minNode != null) {
         addNewEdge(node, minNode, floor);
