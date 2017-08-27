@@ -266,6 +266,44 @@ function addNewNode(x, y, floor, type) {
 }
 
 /**
+ * Tries to connect a node to the nearest node of a type it can connect to on its floor
+ *
+ * @param {Node} node
+ * @param {number} floor
+ */
+function attemptToConnectToNearestNode(node, floor) {
+  console.log(`Node type: ${node.type}`)
+
+  switch (node.type) {
+    case NODE_TYPE_DOOR:
+    case NODE_TYPE_ELEVATOR:
+    case NODE_TYPE_STAIRS:
+    case NODE_TYPE_ROOM: {
+      let minNode = null;
+      let minDistance = Infinity;
+      for (const potentialNode of floors[floor].nodes) {
+        if (canNodeTypesConnect(node.type, potentialNode.type) && canNodeTypesConnect(potentialNode.type, node.type)) {
+          const potentialDist = Math.sqrt(Math.pow(potentialNode.x - node.x, 2) + Math.pow(potentialNode.y - node.y, 2));
+          if (potentialDist < minDistance) {
+            minDistance = potentialDist;
+            minNode = potentialNode;
+          }
+        }
+      }
+
+      console.log(`Nearest node: ${JSON.stringify(minNode)}`)
+
+      if (minNode != null) {
+        addNewEdge(node, minNode, floor);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+}
+
+/**
  * Attempts to remove a node from the graph, if there is one at the location.
  *
  * @param {number} x     x location of node to remove
@@ -490,7 +528,7 @@ function canNodeTypesConnect(typeA, typeB) {
       return canIntersectionsConnectTo(typeB);
   }
 
-  throw new Error(`Invalid node type: ${type}`);
+  throw new Error(`Invalid node type: ${typeA}`);
 }
 
 /**
@@ -499,7 +537,7 @@ function canNodeTypesConnect(typeA, typeB) {
  * @param {number} type node type
  */
 function getNodeTypeName(type) {
-  switch (typeA) {
+  switch (type) {
     case NODE_TYPE_DOOR:
       return 'Door';
     case NODE_TYPE_STAIRS:
@@ -926,6 +964,7 @@ function populateMenu(menu) {
         $('#node-additional').val(node.additional);
         $('#node-x').val(Math.round(node.x));
         $('#node-y').val(Math.round(node.y));
+        $('#node-name').focus();
       }
       break;
     case MENU_EDGE: /* Edge properties */
@@ -985,6 +1024,7 @@ function handleCanvasClick(event) {
       break;
     case TOOL_ADD:
       selectedNode = addNewNode(eventX, eventY, currentFloor, mostRecentNodeType);
+      attemptToConnectToNearestNode(selectedNode, currentFloor);
       setCurrentMenu(MENU_NODE);
       redraw();
       break;
@@ -1335,11 +1375,11 @@ function projectToString() {
   for (const floor of project.floors) {
     floor.img = null;
     for (const edge of floor.edges) {
-      edge.nodeA = edge.nodeA.name;
-      edge.nodeB = edge.nodeB.name;
       if (!(canNodeTypesConnect(edge.nodeA.type, edge.nodeB.type) && canNodeTypesConnect(edge.nodeB.type, edge.nodeA.type))) {
         alert(`Invalid project generated! ${getNodeTypeName(edge.nodeA.type)} cannot connect to ${getNodeTypeName(edge.nodeB.type)}`)
       }
+      edge.nodeA = edge.nodeA.name;
+      edge.nodeB = edge.nodeB.name;
     }
   }
 
