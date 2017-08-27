@@ -188,7 +188,16 @@ function handleKeyPress(event) {
         case 73: currentTool = TOOL_ZOOM_IN; break;         // I
         case 79: currentTool = TOOL_ZOOM_OUT; break;        // O
         case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56:
-          mostRecentNodeType = event.keyCode - 49;
+          mostRecentNodeType = event.keyCode - 49;          // 1 - 8
+          break;
+        case 88:                                            // X
+          if (selectedEdge != null) {
+            if (selectedEdge.direction === 'UD') {
+              $('#edge-lr').click();
+            } else {
+              $('#edge-ud').click();
+            }
+          }
           break;
       }
       if (oldTool !== currentTool) {
