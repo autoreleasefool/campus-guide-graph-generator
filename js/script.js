@@ -123,7 +123,7 @@ let newEdgeY = -1;
 let projectName = '';
 
 // Additional details about the formatting
-let projectFormat = '';
+let projectFormat = 'floor*=^(\d).*$';
 
 // For drawing the user generated content
 let canvas;
@@ -1378,10 +1378,12 @@ function parseProject(json) {
 
   if (typeof (json.projectName) === 'string') {
     projectName = json.projectName;
+    $('#base-name').val(projectName);
   }
 
   if (typeof (json.projectFormat) === 'string') {
     projectFormat = json.projectFormat;
+    $('#base-format').val(projectFormat);
   }
 
   clearGeneratedNodeNames();
@@ -1434,7 +1436,7 @@ function loadProject(e) {
     try {
       json = JSON.parse(event.target.result);
     } catch (e) {
-      alert('Error parsing file!');
+      alert(`Error parsing file! Error: ${e}`);
       // Failed to parse JSON
       return;
     }
@@ -1485,7 +1487,11 @@ function assignAllNodeNames() {
   }
 
   // Assign names to nodes without names
-  const nodeNameCounts = [0, 0, 0, 0, 0];
+  const nodeNameCounts = [];
+  for (const type of nodeTypeColors) {
+    nodeNameCounts.push(0);
+  }
+
   for (const floor of floors) {
     for (const node of floor.nodes) {
       assignNodeName(node, nodeNameCounts, takenNames);
@@ -1592,14 +1598,33 @@ function generateEdgeFile(shouldDownload = true) {
 function generateNodeFile(shouldDownload = true) {
   assignAllNodeNames();
 
+  const streets = new Map();
   let nodes = {};
   for (const floor of floors) {
     for (const node of floor.nodes){
       switch (node.type) {
         case NODE_TYPE_INTERSECTION:
-        case NODE_TYPE_STREET:
-          nodes[getNodeName(node)] = node.additional;
+        case NODE_TYPE_STREET: {
+          const hashedDirections = [];
+          const directions = node.additional.split(',');
+          for (const direction of directions) {
+            const hashedNames = [];
+            const names = direction.split(':');
+            for (const name of names) {
+              if (name.length === 0) {
+                continue;
+              }
+
+              if (!streets.has(name)) {
+                streets.set(name, streets.size);
+              }
+              hashedNames.push(streets.get(name));
+            }
+            hashedDirections.push(hashedNames.join(':'));
+          }
+          nodes[getNodeName(node)] = hashedDirections.join();
           break;
+        }
         default:
           break;
       }
@@ -1611,6 +1636,12 @@ function generateNodeFile(shouldDownload = true) {
     if (nodes.hasOwnProperty(node)) {
       file += `${node}|${nodes[node]}\n`;
     }
+  }
+
+  file += '[STREETS]\n';
+  const sortedStreets = Array.from(streets.keys()).sort();
+  for (const street of sortedStreets) {
+    file += `${streets.get(street)}|${street}\n`;
   }
 
   if (shouldDownload) {
@@ -1648,7 +1679,7 @@ function generateExcludedNodesFile(shouldDownload = true) {
 
   let file = ''
   for (const edge of edges) {
-    file += `${getNodeName(edge.nodeA)}|${getNodeName(edge.nodeB)}\n`;
+    file += `${getNodeName(edge.nodeA)}-${getNodeName(edge.nodeB)}\n`;
   }
 
   if (shouldDownload) {
