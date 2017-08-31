@@ -6,12 +6,12 @@
     <meta charset="utf-8">
     <title>GG - Campus Guide</title>
     <!-- Load styles -->
+    <link rel="stylesheet" href="assets/fonts.css">
+    <link rel="stylesheet" href="assets/jquery-ui.css">
     <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Roboto|Material+Icons">
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
     <!-- Load scripts -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
+    <script src="assets/jquery.min.js"></script>
+    <script src="assets/jquery-ui.min.js"></script>
     <script defer src="js/script.js"></script>
   </head>
 
@@ -74,7 +74,7 @@
           <input type="text" id="base-name" name="base-name" placeholder="MHN" />
 
           <label for="base-format">Additional formatting</label>
-          <input type="text" id="base-format" name="base-format" placeholder="floor0=0YY\nfloor*=XXYY" />
+          <input type="text" id="base-format" name="base-format" placeholder="floor00=^(00).*$\nfloor*=^(\d).*$" value="floor*=^(\d).*$" />
 
           <hr />
 
