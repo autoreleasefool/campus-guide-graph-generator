@@ -818,9 +818,9 @@ function getNodeDisplayName(node) {
 function getNodeName(node) {
   let name = '';
   if (node.bid) {
-    name += `B${node.bid}-`;
+    name += `B${node.bid.trim()}-`;
   }
-  return `${name}${nodeTypeIdentifiers[node.type]}${node.name}`;
+  return `${name}${nodeTypeIdentifiers[node.type]}${node.name.trim()}`;
 }
 
 /**
@@ -1445,10 +1445,6 @@ function loadProject(e) {
   }
 
   reader.readAsText(e.target.files[0]);
-  // if (/text|javascript/ig.test(e.target.files[0].type)) {
-  // } else {
-  //   alert(`You\'ve selected an invalid filetype: ${e.target.files[0].type}`);
-  // }
 }
 
 /**
@@ -1546,11 +1542,11 @@ function generateEdgeFile(shouldDownload = true) {
   for (const edge of edges) {
     const relevantCoord = edge.direction === 'LR' ? 'x' : 'y';
     const aToBDirection = edge.nodeA[relevantCoord] < edge.nodeB[relevantCoord]
-        ? edge.direction.charAt(0)
-        : edge.direction.charAt(1);
-    const bToADirection = aToBDirection === edge.direction.charAt(0)
         ? edge.direction.charAt(1)
         : edge.direction.charAt(0);
+    const bToADirection = aToBDirection === edge.direction.charAt(0)
+        ? edge.direction.charAt(0)
+        : edge.direction.charAt(1);
 
     const nameA = getNodeName(edge.nodeA);
     const nameB = getNodeName(edge.nodeB);
@@ -1574,11 +1570,6 @@ function generateEdgeFile(shouldDownload = true) {
   let file = ''
   for (const node in adjacencies) {
     if (adjacencies.hasOwnProperty(node)) {
-      if (node.startsWith('B')) {
-        // Don't include nodes from other buildings in this building's file
-        continue;
-      }
-
       file += `${node}|${adjacencies[node].join()}\n`;
     }
   }
@@ -1603,6 +1594,11 @@ function generateNodeFile(shouldDownload = true) {
   for (const floor of floors) {
     for (const node of floor.nodes){
       switch (node.type) {
+        case NODE_TYPE_DOOR:
+          if (projectName === 'OUT') {
+            nodes[getNodeName(node)] = `${Math.round(node.x)},${Math.round(node.y)}`
+          }
+          break;
         case NODE_TYPE_INTERSECTION:
         case NODE_TYPE_STREET: {
           const hashedDirections = [];
@@ -1872,7 +1868,6 @@ $(document).ready(function() {
     updateNodeType();
     updateNodeList();
     redraw();
-    // setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
   });
   $('.node-color').change(function() {
     setNodeTypeColor(mostRecentNodeType, $('#node-r').val(), $('#node-g').val(), $('#node-b').val());
