@@ -1451,14 +1451,19 @@ function loadProject(e) {
  * Assigns a name to a node if it does not have one.
  *
  * @param {object} node         the node to potentially assign a name to
+ * @param {number} floor        the floor the node is on
  * @param {array}  nodeIdCounts number of each node type created
- * @param {object} takenNames
+ * @param {object} takenNames   set of names which are already taken so duplicates can be avoided
  */
-function assignNodeName(node, nodeIdCounts, takenNames) {
+function assignNodeName(node, floorName, nodeIdCounts, takenNames) {
   if (node.name === '') {
     let potentialName = '';
     do {
-      potentialName = nodeIdCounts[node.type].toString();
+      if (node.type === NODE_TYPE_HALL) {
+        potentialName = `${floorName}${nodeIdCounts[node.type].toString()}`;
+      } else {
+        potentialName = nodeIdCounts[node.type].toString();
+      }
       nodeIdCounts[node.type]++;
     } while (takenNames[potentialName] === true);
 
@@ -1485,12 +1490,12 @@ function assignAllNodeNames() {
   // Assign names to nodes without names
   const nodeNameCounts = [];
   for (const type of nodeTypeColors) {
-    nodeNameCounts.push(0);
+    nodeNameCounts.push(1);
   }
 
   for (const floor of floors) {
     for (const node of floor.nodes) {
-      assignNodeName(node, nodeNameCounts, takenNames);
+      assignNodeName(node, floor.name, nodeNameCounts, takenNames);
     }
   }
 }
@@ -1545,8 +1550,8 @@ function generateEdgeFile(shouldDownload = true) {
         ? edge.direction.charAt(1)
         : edge.direction.charAt(0);
     const bToADirection = aToBDirection === edge.direction.charAt(0)
-        ? edge.direction.charAt(0)
-        : edge.direction.charAt(1);
+        ? edge.direction.charAt(1)
+        : edge.direction.charAt(0);
 
     const nameA = getNodeName(edge.nodeA);
     const nameB = getNodeName(edge.nodeB);
