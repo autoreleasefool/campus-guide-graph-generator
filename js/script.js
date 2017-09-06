@@ -54,6 +54,13 @@ const BASE_CANVAS_WIDTH = 800;
 // Static canvas height for drawing images
 const BASE_CANVAS_HEIGHT = 800;
 
+// Colors for drawing edges
+const EDGE_COLORS = {
+  'UD': 'green',
+  'LR': 'black',
+  'possibleError': 'red',
+}
+
 /************************************************
  * VARIABLES - GRAPH
  ************************************************/
@@ -1272,12 +1279,10 @@ function redraw() {
       continue;
     }
 
-    if (edge.direction === 'LR') {
-      canvasCtx.strokeStyle = 'black';
-    } else if (edge.direction === 'UD') {
-      canvasCtx.strokeStyle = '#8F001A';
+    if (edge.accessible && !(isNodeTypeAccessible(edge.nodeA.type) && isNodeTypeAccessible(edge.nodeB.type))) {
+      canvasCtx.strokeStyle = EDGE_COLORS['possibleError'];
     } else {
-      throw new Error(`Invalid edge direction. Not 'LR' or 'UD': ${edge.direction}`);
+      canvasCtx.strokeStyle = EDGE_COLORS[edge.direction];
     }
 
     canvasCtx.beginPath();
