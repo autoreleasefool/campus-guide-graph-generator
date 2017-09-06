@@ -46,6 +46,8 @@ const NODE_TYPE_STREET = 5;
 const NODE_TYPE_PATH = 6;
 // Nodes which represent street intersections
 const NODE_TYPE_INTERSECTION = 7;
+// Nodes which represent steps outdoors
+const NODE_TYPE_OUTDOOR_STEPS = 7;
 
 // Static canvas width for drawing images
 const BASE_CANVAS_WIDTH = 800;
@@ -93,10 +95,12 @@ const nodeTypeColors = [
   { r: 0, g: 255, b: 255 },
   { r: 255, g: 0, b: 255 },
   { r: 128, g: 128, b: 128 },
+  { r: 128, g: 128, b: 128 },
+  { r: 255, g: 128, b: 0 },
 ];
 // Identify node types by a single character
 const nodeTypeIdentifiers = [
-  'D', 'S', 'E', 'H', 'R', 'T', 'P', 'I',
+  'D', 'S', 'E', 'H', 'R', 'T', 'P', 'I', 'O',
 ];
 // Radius of nodes
 let nodeSize = DEFAULT_NODE_SIZE;
@@ -187,8 +191,8 @@ function handleKeyPress(event) {
         case 76: currentTool = TOOL_EDGE; break;            // L
         case 73: currentTool = TOOL_ZOOM_IN; break;         // I
         case 79: currentTool = TOOL_ZOOM_OUT; break;        // O
-        case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56:
-          mostRecentNodeType = event.keyCode - 49;          // 1 - 8
+        case 49: case 50: case 51: case 52: case 53: case 54: case 55: case 56: case 57:
+          mostRecentNodeType = event.keyCode - 49;          // 1 - 9
           break;
         case 88:                                            // X
           if (selectedEdge != null) {
@@ -531,6 +535,19 @@ function canIntersectionsConnectTo(type) {
 }
 
 /**
+ * Returns true if outdoor steps nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canOutdoorStepsConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_STREET:
+    case NODE_TYPE_PATH:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
  * Checks if two node types can be connected by an edge.
  *
  * @param {number} typeA type of first node
@@ -555,9 +572,27 @@ function canNodeTypesConnect(typeA, typeB) {
       return canPathsConnectTo(typeB);
     case NODE_TYPE_INTERSECTION:
       return canIntersectionsConnectTo(typeB);
+    case NODE_TYPE_OUTDOOR_STEPS:
+      return canOutdoorStepsConnectTo(typeB);
   }
 
   throw new Error(`Invalid node type: ${typeA}`);
+}
+
+/**
+ * Checks if a node type is accessible or not.
+ *
+ * @param {number} type node type
+ * @returns {boolean} true if a node is usually accessible, false otherwise
+ */
+function isNodeTypeAccessible(type) {
+  switch (type) {
+    case NODE_TYPE_OUTDOOR_STEPS:
+    case NODE_TYPE_STAIRS:
+      return false;
+    default:
+      return true;
+  }
 }
 
 /**
@@ -583,6 +618,8 @@ function getNodeTypeName(type) {
       return 'Path';
     case NODE_TYPE_INTERSECTION:
       return 'Intersection';
+    case NODE_TYPE_OUTDOOR_STEPS:
+      return 'OutdoorSteps';
   }
 
   throw new Error(`Invalid node type: ${type}`);
@@ -601,11 +638,13 @@ function addNewEdge(nodeA, nodeB, floor) {
     return;
   }
 
+  const accessible = isNodeTypeAccessible(nodeA.type) && isNodeTypeAccessible(nodeB.type);
+
   const newEdge = {
     nodeA,
     nodeB,
+    accessible,
     direction: 'LR',
-    accessible: true,
     closed: false,
     aToB: true,
     bToA: true,
@@ -1606,6 +1645,11 @@ function generateNodeFile(shouldDownload = true) {
           break;
         case NODE_TYPE_INTERSECTION:
         case NODE_TYPE_STREET: {
+          if (node.additional == undefined || node.additional.length === 0) {
+            console.log(`Street/Intersection node with no additional data!`
+                + `(${Math.round(node.x)}, ${Math.round(node.y)})`);
+          }
+
           const hashedDirections = [];
           const directions = node.additional.split(',');
           for (const direction of directions) {
