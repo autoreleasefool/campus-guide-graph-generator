@@ -47,7 +47,9 @@ const NODE_TYPE_PATH = 6;
 // Nodes which represent street intersections
 const NODE_TYPE_INTERSECTION = 7;
 // Nodes which represent steps outdoors
-const NODE_TYPE_OUTDOOR_STEPS = 7;
+const NODE_TYPE_OUTDOOR_STEPS = 8;
+// Nodes which represent transit stops
+const NODE_TYPE_TRANSIT = 9;
 
 // Static canvas width for drawing images
 const BASE_CANVAS_WIDTH = 800;
@@ -102,12 +104,12 @@ const nodeTypeColors = [
   { r: 0, g: 255, b: 255 },
   { r: 255, g: 0, b: 255 },
   { r: 128, g: 128, b: 128 },
-  { r: 128, g: 128, b: 128 },
   { r: 255, g: 128, b: 0 },
+  { r: 128, g: 128, b: 255 },
 ];
 // Identify node types by a single character
 const nodeTypeIdentifiers = [
-  'D', 'S', 'E', 'H', 'R', 'T', 'P', 'I', 'O',
+  'D', 'S', 'E', 'H', 'R', 'T', 'P', 'I', 'O', 'U',
 ];
 // Radius of nodes
 let nodeSize = DEFAULT_NODE_SIZE;
@@ -300,6 +302,7 @@ function addNewNode(x, y, floor, type) {
 function attemptToConnectToNearestNode(node, floor) {
   switch (node.type) {
     case NODE_TYPE_DOOR:
+    case NODE_TYPE_TRANSIT:
     case NODE_TYPE_ELEVATOR:
     case NODE_TYPE_STAIRS:
     case NODE_TYPE_ROOM: {
@@ -446,6 +449,19 @@ function canDoorsConnectTo(type) {
 }
 
 /**
+ * Returns true if transit nodes can be connected to nodes of the given type, false otherwise.
+ */
+function canTransitStopConnectTo(type) {
+  switch (type) {
+    case NODE_TYPE_PATH:
+    case NODE_TYPE_STREET:
+      return true;
+    default:
+      return false;
+  }
+}
+
+/**
  * Returns true if stair nodes can be connected to nodes of the given type, false otherwise.
  */
 function canStairsConnectTo(type) {
@@ -506,6 +522,7 @@ function canStreetsConnectTo(type) {
     case NODE_TYPE_STREET:
     case NODE_TYPE_PATH:
     case NODE_TYPE_INTERSECTION:
+    case NODE_TYPE_TRANSIT:
       return true;
     default:
       return false;
@@ -521,6 +538,8 @@ function canPathsConnectTo(type) {
     case NODE_TYPE_STREET:
     case NODE_TYPE_PATH:
     case NODE_TYPE_INTERSECTION:
+    case NODE_TYPE_OUTDOOR_STEPS:
+    case NODE_TYPE_TRANSIT:
       return true;
     default:
       return false;
@@ -546,7 +565,6 @@ function canIntersectionsConnectTo(type) {
  */
 function canOutdoorStepsConnectTo(type) {
   switch (type) {
-    case NODE_TYPE_STREET:
     case NODE_TYPE_PATH:
       return true;
     default:
@@ -581,6 +599,8 @@ function canNodeTypesConnect(typeA, typeB) {
       return canIntersectionsConnectTo(typeB);
     case NODE_TYPE_OUTDOOR_STEPS:
       return canOutdoorStepsConnectTo(typeB);
+    case NODE_TYPE_TRANSIT:
+      return canTransitStopConnectTo(typeB);
   }
 
   throw new Error(`Invalid node type: ${typeA}`);
@@ -627,6 +647,8 @@ function getNodeTypeName(type) {
       return 'Intersection';
     case NODE_TYPE_OUTDOOR_STEPS:
       return 'OutdoorSteps';
+    case NODE_TYPE_TRANSIT:
+      return 'TransitStop';
   }
 
   throw new Error(`Invalid node type: ${type}`);
@@ -1410,9 +1432,8 @@ function parseProject(json) {
   }
 
   if (typeof (json.nodeTypeColors) === 'object') {
-    nodeTypeColors.length = 0;
-    for (const color of json.nodeTypeColors) {
-      nodeTypeColors.push(color);
+    for (let i = 0; i < json.nodeTypeColors.length; i++) {
+      nodeTypeColors[i] = json.nodeTypeColors[i];
     }
   }
 
