@@ -874,7 +874,7 @@ function updateNodeList() {
  * @returns {string} the name of the node
  */
 function getNodeDisplayName(node) {
-  return `${getNodeName(node)} (${node.x}, ${node.y})`;
+  return `${getNodeName(node)} (${Math.round(node.x)}, ${Math.round(node.y)})`;
 }
 
 /**
