@@ -886,7 +886,7 @@ function getNodeDisplayName(node) {
 function getNodeName(node) {
   let name = '';
   if (node.bid) {
-    name += `B${node.bid.trim()}-`;
+    name += `B${node.bid.trim()}#`;
   }
   return `${name}${nodeTypeIdentifiers[node.type]}${node.name.trim()}`;
 }
