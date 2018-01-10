@@ -1640,7 +1640,7 @@ function generateEdgeFile(shouldDownload = true) {
   let file = ''
   for (const node in adjacencies) {
     if (adjacencies.hasOwnProperty(node)) {
-      file += `${node}|${adjacencies[node].join()}\n`;
+      file += `${node}|${adjacencies[node].join('%')}\n`;
     }
   }
 
