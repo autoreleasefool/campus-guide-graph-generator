@@ -1525,7 +1525,7 @@ function assignNodeName(node, floorName, nodeIdCounts, takenNames) {
     let potentialName = '';
     do {
       if (node.type === NODE_TYPE_HALL) {
-        potentialName = `${floorName}${nodeIdCounts[node.type].toString()}`;
+        potentialName = `${floorName}h${nodeIdCounts[node.type].toString()}`;
       } else {
         potentialName = nodeIdCounts[node.type].toString();
       }
