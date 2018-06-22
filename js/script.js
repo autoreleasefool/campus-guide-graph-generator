@@ -1750,7 +1750,7 @@ function generateExcludedNodesFile(shouldDownload = true) {
 
   let file = ''
   for (const edge of edges) {
-    file += `${getNodeName(edge.nodeA)}-${getNodeName(edge.nodeB)}\n`;
+    file += `${getNodeName(edge.nodeA)}|${getNodeName(edge.nodeB)}\n`;
   }
 
   if (shouldDownload) {
